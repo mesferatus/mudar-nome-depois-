@@ -17,3 +17,11 @@ describe('blocos <-> markdown', () => {
   })
   it('nota vazia vira um parágrafo', () => { expect(mdToBlocks('')).toHaveLength(1) })
 })
+
+describe('banco de dados dentro da página', () => {
+  it('ida e volta do bloco @banco', () => {
+    const b = mdToBlocks('Texto\n@banco(abc123)\nFim')
+    expect(b[1]).toMatchObject({ type: 'dbview', text: 'abc123' })
+    expect(blocksToMd(b)).toBe('Texto\n@banco(abc123)\nFim')
+  })
+})

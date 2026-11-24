@@ -726,3 +726,12 @@ button.chip.on { background: var(--accent); color: var(--accent-ink); }
   .ins-k { grid-column: 1 / -1; grid-template-columns: repeat(5, 1fr); }
 }
 @media (min-width: 900px) { .focus { top: auto; bottom: 28px; } }
+mark { background: color-mix(in srgb, var(--warn) 35%, transparent); color: inherit; border-radius: 4px; padding: 0 2px; }
+.tc-vermelho { color: #ef6b6b; } .tc-laranja { color: #f0a050; } .tc-verde { color: #5fbf7a; } .tc-azul { color: #6fa0ef; } .tc-roxo { color: #b48ef0; } .tc-rosa { color: #f07aaf; }
+.cdot { font-size: 14px; }
+.bdb { margin: 8px 0 14px; padding: 12px; border: 1px solid var(--line); border-radius: 16px; background: color-mix(in srgb, var(--card) 70%, transparent); }
+.bdb-t { border: 0; background: none; color: var(--text); font: 600 17px 'Sora'; cursor: pointer; padding: 2px 4px 8px; }
+.comments { margin-top: 28px; border-top: 1px solid var(--line); padding-top: 16px; display: grid; gap: 8px; }
+.cmt { display: flex; gap: 10px; align-items: flex-start; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; font-size: 14px; }
+.cmt.done { opacity: .5; } .cmt.done > div > div { text-decoration: line-through; }
+.cmt button { border: 0; background: none; color: var(--muted); cursor: pointer; border-radius: 7px; width: 26px; height: 26px; } .cmt button:hover { background: var(--hover); color: var(--text); }

@@ -20,6 +20,7 @@ export interface Note {
   id: string; title: string; body: string; folder: string; tags: string[]; updatedAt: string; pinned?: boolean
   parentId?: string; icon?: string; cover?: string; expanded?: boolean
   trashed?: boolean; wide?: boolean
+  comments?: { id: string; text: string; at: string; done?: boolean }[]
   db?: DbSchema
   props?: Record<string, string | number | boolean | undefined>
 }

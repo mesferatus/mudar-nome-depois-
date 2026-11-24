@@ -23,7 +23,10 @@ jobs:
       - run: npm test
       # versão sobe sozinha: 1.0.<número da execução>
       - run: npm version 1.0.${{ github.run_number }} --no-git-tag-version
+        shell: bash
       - run: npx vite build
-      - run: npx electron-builder --win --publish always -c.publish.owner=${{ github.repository_owner }} -c.publish.repo=${{ github.event.repository.name }}
+      - name: Gerar instalador e publicar
+        shell: bash
+        run: npx electron-builder --win --publish always -c.publish.owner=${{ github.repository_owner }} -c.publish.repo=${{ github.event.repository.name }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
