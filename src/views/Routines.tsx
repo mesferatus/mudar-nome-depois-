@@ -1,3 +1,4 @@
+import { eventsOn } from '../lib/recur'
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../lib/store'
@@ -42,7 +43,7 @@ export default function Routines() {
         const blocks: { t: Task; date: string; start: string; end: string }[] = []
         const already = new Set(d.events.filter(e => e.title.startsWith('Foco: ')).map(e => e.title.slice(6)))
         let day = new Date(); if (new Date().getHours() >= 16) day = nextWorkday(day)
-        const busy = (ds: string) => d.events.filter(e => e.date === ds).map(e => [toMin(e.start), toMin(e.end)])
+        const busy = (ds: string) => eventsOn(d.events, ds).map(e => [toMin(e.start), toMin(e.end)])
         for (const t of open) {
           if (already.has(t.title)) continue
           let left = Math.max(30, Math.ceil(Math.min(t.estimate! * 60, 240) / 30) * 30)

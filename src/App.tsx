@@ -6,12 +6,14 @@ import { Icon, spring } from './components/ui'
 import { Logo } from './components/Logo'
 import { requestNote } from './lib/nav'
 import { Onboarding } from './components/Onboarding'
+import { FocusTimer } from './components/FocusTimer'
 import { useReminders } from './lib/reminders'
 import Dashboard from './views/Dashboard'
 import Calendar from './views/Calendar'
 import Board from './views/Board'
 import Notes from './views/Notes'
 import Routines from './views/Routines'
+import Insights from './views/Insights'
 import Settings, { THEMES } from './views/Settings'
 
 const NAV = [
@@ -19,8 +21,9 @@ const NAV = [
   { id: 'calendario', l: 'Calendário', i: 'cal', k: '2', C: Calendar, mob: true },
   { id: 'entregas', l: 'Entregas', i: 'board', k: '3', C: Board, mob: true },
   { id: 'notas', l: 'Notas', i: 'note', k: '4', C: Notes, mob: true },
-  { id: 'rotinas', l: 'Rotinas', i: 'bolt', k: '5', C: Routines, mob: false },
-  { id: 'ajustes', l: 'Ajustes', i: 'gear', k: '6', C: Settings, mob: false },
+  { id: 'insights', l: 'Insights', i: 'chart', k: '5', C: Insights, mob: false },
+  { id: 'rotinas', l: 'Rotinas', i: 'bolt', k: '6', C: Routines, mob: false },
+  { id: 'ajustes', l: 'Ajustes', i: 'gear', k: '7', C: Settings, mob: false },
 ]
 const LEGACY: Record<string, string> = { painel: 'inicio', planner: 'calendario', agenda: 'calendario' }
 
@@ -80,7 +83,7 @@ function Shell() {
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); setPal(p => !p) }
-      if (e.altKey && /^[1-6]$/.test(e.key)) { e.preventDefault(); setView(NAV[Number(e.key) - 1].id) }
+      if (e.altKey && /^[1-7]$/.test(e.key)) { e.preventDefault(); setView(NAV[Number(e.key) - 1].id) }
       const tag = (e.target as HTMLElement).tagName
       if (e.key === 'n' && !e.ctrlKey && !e.metaKey && !e.altKey && !['INPUT', 'TEXTAREA', 'SELECT'].includes(tag)) { e.preventDefault(); quick() }
     }
@@ -96,6 +99,7 @@ function Shell() {
     <header className="topbar">
       <Logo size={44} />
       <div className="t"><b>kairotec<span style={{ color: 'var(--accent)' }}>.</span></b><span>{hello} · {new Date().toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' })}</span></div>
+      <motion.button whileTap={{ scale: .9 }} className="btn icon" aria-label="Insights" onClick={() => setView('insights')}><Icon n="chart" /></motion.button>
       <motion.button whileTap={{ scale: .9 }} className="btn icon" aria-label="Rotinas" onClick={() => setView('rotinas')}><Icon n="bolt" /></motion.button>
       <motion.button whileTap={{ scale: .9 }} className="btn icon" aria-label="Ajustes" onClick={() => setView('ajustes')}><Icon n="gear" /></motion.button>
     </header>
@@ -118,6 +122,7 @@ function Shell() {
     <main className="main"><AnimatePresence mode="wait"><motion.div key={view} style={{ height: view === 'notas' ? '100%' : undefined }}><Cur /></motion.div></AnimatePresence></main>
     {!['ajustes', 'notas'].includes(view) && <motion.button className="fab" onClick={() => quick({ kind: view === 'calendario' ? 'event' : 'task' })} initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} whileHover={{ y: -2 }} whileTap={{ scale: .92 }} transition={spring} aria-label="Novo" title="Criar (tecla N)">
       <Icon n="plus" s={20} /> Novo</motion.button>}
+    <FocusTimer />
     <Palette open={pal} close={() => setPal(false)} go={setView} />
     <AnimatePresence>{!data.settings.onboarded && <Onboarding key="ob" />}</AnimatePresence>
     <div className="toasts"><AnimatePresence>{toasts.map(t => <motion.div key={t.id} className="toast" layout initial={{ opacity: 0, y: 20, scale: .9 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 10, scale: .95 }} transition={spring}>{t.msg}{t.action && <button className="toast-act" onClick={() => t.action!.run()}>{t.action.label}</button>}</motion.div>)}</AnimatePresence></div>

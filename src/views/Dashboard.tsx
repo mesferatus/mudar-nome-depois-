@@ -1,3 +1,4 @@
+import { eventsOn } from '../lib/recur'
 import { useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { useStore } from '../lib/store'
@@ -16,7 +17,7 @@ export default function Dashboard() {
   const t = today()
   const nowHM = `${String(new Date().getHours()).padStart(2, '0')}:${String(new Date().getMinutes()).padStart(2, '0')}`
   const dueToday = data.tasks.filter(x => x.due === today() && x.status !== 'done')
-  const todayEvents = data.events.filter(e => e.date === t).sort((a, b) => a.start.localeCompare(b.start))
+  const todayEvents = eventsOn(data.events, t).sort((a, b) => a.start.localeCompare(b.start))
   const proj = (id?: string) => data.projects.find(p => p.id === id)
 
   // Burndown: open estimated hours over next 14 days vs ideal

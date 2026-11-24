@@ -76,6 +76,8 @@ type Ctx = {
   upsertProject: (p: Partial<Project> & { id?: string }) => Project
   removeProject: (id: string) => void
   setSettings: (s: Partial<Settings>) => void
+  startTimer: (taskId: string, mode?: 'livre' | 'pomodoro') => void
+  stopTimer: () => number
   toast: (msg: string, action?: ToastAction) => void
   toasts: { id: string; msg: string; action?: ToastAction }[]
 }
@@ -126,6 +128,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const keep = () => { snap.current = ref.current }
   const undoable = (msg: string) => { toast(msg, { label: 'Desfazer', run: () => { if (snap.current) { const s = snap.current; snap.current = null; setData(s); ref.current = s } } }) }
 
+  const stopTimer = () => {
+    const t = ref.current.timer; if (!t) return 0
+    const end = new Date().toISOString(), mins = (new Date(end).getTime() - new Date(t.start).getTime()) / 60000
+    mut(d => ({ ...d, timer: undefined, tasks: mins < 1 ? d.tasks : d.tasks.map(x => x.id === t.taskId ? { ...x, timeLog: [...(x.timeLog ?? []), { start: t.start, end }] } : x) }))
+    return Math.round(mins)
+  }
+
   const api = useMemo<Omit<Ctx, 'data' | 'sync' | 'toasts'>>(() => ({
     setSync, toast,
     replaceAll: (d) => { ref.current = d; setData(d) },
@@ -172,6 +181,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       mut(d => ({ ...d, projects: upsert(d.projects, res) })); return res
     },
     removeProject: (id) => { keep(); undoable('Projeto removido'); mut(d => ({ ...d, projects: d.projects.filter(x => x.id !== id), tasks: d.tasks.map(t => t.projectId === id ? { ...t, projectId: undefined } : t) })) },
+    startTimer: (taskId, mode = 'pomodoro') => {
+      const cur = ref.current.timer
+      if (cur) stopTimer()
+      mut(d => ({ ...d, timer: { taskId, start: new Date().toISOString(), mode }, tasks: d.tasks.map(t => t.id === taskId && t.status === 'todo' ? { ...t, status: 'doing' } : t) }))
+    },
+    stopTimer,
     setSettings: (s) => mut(d => ({ ...d, settings: { ...d.settings, ...s } })),
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [])

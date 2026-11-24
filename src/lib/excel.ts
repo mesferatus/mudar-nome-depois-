@@ -1,3 +1,4 @@
+import { eventsOn } from './recur'
 import ExcelJS from 'exceljs'
 import type { Data } from './types'
 import { STATUS_LABEL, PRIORITY_LABEL } from './types'
@@ -75,7 +76,7 @@ export async function buildWorkbook(d: Data): Promise<Blob> {
       for (let c = 0; c < 7; c++) {
         const day = grid[w * 7 + c], ds = iso(day), inMonth = day.getMonth() === y.getMonth()
         const items = [
-          ...d.events.filter(e => e.date === ds).sort((a, b) => a.start.localeCompare(b.start)).map(e => `◷ ${e.start} ${e.title}`),
+          ...eventsOn(d.events, ds).sort((a, b) => a.start.localeCompare(b.start)).map(e => `◷ ${e.start} ${e.title}`),
           ...d.tasks.filter(t => t.due === ds).map(t => `${t.status === 'done' ? '✓' : '◆'} ${t.title}`),
         ]
         const n = numRow.getCell(c + 1), b = bodyRow.getCell(c + 1)
