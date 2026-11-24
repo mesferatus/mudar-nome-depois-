@@ -1,18 +1,27 @@
 import { motion } from 'framer-motion'
 import { useId } from 'react'
 
-/** Marca Kairotec: a estrela do "momento certo" (kairós) sobre um bloco café. */
-export function Logo({ size = 36, animate = true }: { size?: number; animate?: boolean }) {
+/*
+ * Marca Kairotec — "Ascensão": duas setas subindo (progresso, entregas avançando)
+ * com uma sombra deslocada que dá profundidade de papel.
+ *   variant="app"  → ícone em bloco café (app, favicon)
+ *   variant="mark" → só o símbolo, para usar sobre qualquer fundo
+ */
+export function Logo({ size = 36, variant = 'app', animate = true }: { size?: number; variant?: 'app' | 'mark'; animate?: boolean }) {
   const id = useId().replace(/:/g, '')
-  return <svg className="logo" width={size} height={size} viewBox="0 0 64 64" aria-label="Kairotec">
+  const up = (d: number) => animate ? { initial: { y: 14, opacity: 0 }, animate: { y: 0, opacity: 1 }, transition: { type: 'spring' as const, stiffness: 260, damping: 18, delay: d } } : {}
+  return <svg className="logo" width={size} height={size} viewBox="0 0 64 64" aria-label="Kairotec" role="img">
     <defs>
-      <linearGradient id={`g${id}`} x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#4a3222" /><stop offset="1" stopColor="#1a120d" /></linearGradient>
-      <linearGradient id={`s${id}`} x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#fffbff" /><stop offset="1" stopColor="#f1dabf" /></linearGradient>
+      <linearGradient id={`bg${id}`} x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#4a3222" /><stop offset="1" stopColor="#1f1610" /></linearGradient>
+      <linearGradient id={`lo${id}`} x1="0" y1="1" x2="1" y2="0"><stop offset="0" stopColor="#c0703f" /><stop offset="1" stopColor="#e6a87c" /></linearGradient>
     </defs>
-    <rect width="64" height="64" rx="18" fill={`url(#g${id})`} />
-    <motion.path d="M30 12 C31.6 24 34 26.4 46 28 C34 29.6 31.6 32 30 44 C28.4 32 26 29.6 14 28 C26 26.4 28.4 24 30 12Z" fill={`url(#s${id})`}
-      style={{ originX: '30px', originY: '28px' }} initial={animate ? { scale: 0, rotate: -90 } : false} animate={{ scale: 1, rotate: 0 }} transition={{ type: 'spring', stiffness: 200, damping: 14 }} />
-    <motion.path d="M46 38 C46.7 43 47.6 43.9 52 44.6 C47.6 45.3 46.7 46.2 46 51 C45.3 46.2 44.4 45.3 40 44.6 C44.4 43.9 45.3 43 46 38Z" fill="#c79d7b"
-      initial={animate ? { opacity: 0, scale: 0 } : false} animate={{ opacity: [0, 1, .6, 1], scale: 1 }} transition={{ delay: .35, duration: 1.2 }} style={{ originX: '46px', originY: '44px' }} />
+    {variant === 'app' && <rect width="64" height="64" rx="16" fill={`url(#bg${id})`} />}
+    <g strokeLinecap="round" strokeLinejoin="round" fill="none" strokeWidth="8.5">
+      {/* sombra deslocada */}
+      <path d="M17.5 48 L33.5 34 L49.5 48" stroke="#000" strokeOpacity=".28" transform="translate(2.5 3)" />
+      <motion.path d="M17.5 48 L33.5 34 L49.5 48" stroke={`url(#lo${id})`} {...up(.05)} />
+      <path d="M21.5 25.5 L33.5 15 L45.5 25.5" stroke="#000" strokeOpacity=".28" transform="translate(2.5 3)" />
+      <motion.path d="M21.5 25.5 L33.5 15 L45.5 25.5" stroke="#f1dabf" {...up(.18)} />
+    </g>
   </svg>
 }
