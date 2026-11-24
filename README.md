@@ -23,7 +23,7 @@ Use **Microsoft Edge** ou **Google Chrome** (necessário para gravar direto em a
 | **Entregas** | Quadro (A fazer → Em andamento → Revisão → Concluído) e visão em lista, filtros por projeto |
 | **Notas** | Markdown, pastas, `#tags`, `[[links]]` entre páginas, backlinks, checklists clicáveis, notas fixadas |
 | **Rotinas** | Assistentes locais: *Vigia de prazos*, *Planejador de foco* (cria blocos na agenda), *Relatório semanal* (status report pronto pro gestor), *Faxina* |
-| **Ajustes** | 5 temas retrô editoriais (Bordeaux, Café, Rosé, Ameixa, Celeste), projetos, nuvem, Excel, backup |
+| **Ajustes** | 5 temas (Claro, Grafite, Rosé, Celeste, Floresta), projetos, nuvem, Excel, backup |
 
 Atalhos: `Ctrl+K` paleta de comandos · `Alt+1…7` trocar de aba · `N` nova tarefa.
 
@@ -47,7 +47,7 @@ src/
   views/     Painel, Planner, Agenda, Entregas, Notas, Rotinas, Ajustes
 ```
 
-Visual: serifadas (DM Serif Display + Instrument Serif itálico), Work Sans, listras, selos e pastas.
+Visual limpo com Figtree. Mobile first (barra de navegação inferior no celular); no PC a tela é fixa e só as listas rolam.
 
 Stack: React + TypeScript + Vite, Framer Motion (transições), ExcelJS. Sem servidor.
 

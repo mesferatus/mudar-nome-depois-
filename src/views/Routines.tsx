@@ -98,15 +98,15 @@ export default function Routines() {
   ]
 
   return <Page>
-    <div className="head"><div><div className="kicker">Kairotec · Assistentes</div><h1>Rotinas <em>do dia a dia</em></h1><p>Assistentes que rodam localmente sobre seus dados — analisam, sugerem e só aplicam quando você confirma.</p></div><div className="sp" /><span className="stamp">✻ local</span></div>
-    <div className="grid routines-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(460px, 1fr))' }}>
+    <div className="head"><div><h1>Rotinas</h1><p>Assistentes que rodam localmente sobre seus dados — analisam, sugerem e só aplicam quando você confirma.</p></div></div>
+    <div className="routines">
       {routines.map((r, i) => <Card key={r.id} delay={i * .05}>
         <div className="agent" style={{ padding: 0 }}>
           <div className="ic">{r.icon}</div>
           <div><b>{r.name}</b><div className="muted" style={{ fontSize: 13 }}>{r.desc}</div></div>
           <Btn variant="sm" onClick={() => setOut(o => ({ ...o, [r.id]: r.run(data) }))}><Icon n="play" s={12} /> Rodar</Btn>
         </div>
-        <AnimatePresence>{out[r.id] && <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} style={{ overflow: 'hidden' }}>
+        <AnimatePresence>{out[r.id] && <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
           <div className="out">{out[r.id].text}</div>
           <div className="row" style={{ marginTop: 10, justifyContent: 'flex-end' }}>
             {r.id === 'status' && <Btn variant="sm" onClick={() => { navigator.clipboard.writeText(out[r.id].text); store.toast('Copiado') }}>Copiar</Btn>}

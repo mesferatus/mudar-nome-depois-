@@ -47,12 +47,12 @@ Este é o seu caderno. Algumas dicas:
 - [x] Abrir o app pela primeira vez` },
       { id: uid(), title: 'Ideias de BI', folder: 'Trabalho', tags: ['bi'], updatedAt: now, body: '# Ideias de BI\n\n- Lead time por fornecedor\n- Curva ABC de peças\n- OTIF semanal #logistica' },
     ],
-    settings: { theme: 'bordeaux', userName: '', weekStart: 1, autoExcel: true, autoCloud: true },
+    settings: { theme: 'claro', userName: '', weekStart: 1, autoExcel: true, autoCloud: true },
   }
 }
 
 function load(): Data {
-  try { const raw = localStorage.getItem(KEY); if (raw) { const d = { ...seed(), ...JSON.parse(raw) }; if (['grafite', 'papel', 'floresta', 'noite', 'areia'].includes(d.settings.theme)) d.settings = { ...d.settings, theme: 'bordeaux' }; return d } } catch { /* ignore */ }
+  try { const raw = localStorage.getItem(KEY); if (raw) { const d = { ...seed(), ...JSON.parse(raw) }; if (['grafite', 'papel', 'floresta', 'noite', 'areia'].includes(d.settings.theme)) d.settings = { ...d.settings, theme: 'claro' }; return d } } catch { /* ignore */ }
   return seed()
 }
 

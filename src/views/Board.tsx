@@ -8,7 +8,7 @@ import { STATUS_LABEL } from '../lib/types'
 import { fmt, today, daysBetween } from '../lib/date'
 
 const COLS: Status[] = ['todo', 'doing', 'review', 'done']
-const CC: Record<Status, string> = { todo: 'var(--info)', doing: '#c97a8e', review: 'var(--warn)', done: 'var(--wine)' }
+const CC: Record<Status, string> = { todo: 'var(--faint)', doing: 'var(--info)', review: 'var(--warn)', done: 'var(--ok)' }
 const PR = { alta: 'var(--bad)', media: 'var(--warn)', baixa: 'var(--muted)' }
 
 export default function Board() {
@@ -28,19 +28,19 @@ export default function Board() {
   }
 
   return <Page wide>
-    <div className="head"><div><div className="kicker">Kairotec · Quadro</div><h1>Entregas <em>em dia</em></h1><p>Quadro de tarefas — arraste entre colunas</p></div><div className="sp" />
+    <div className="head"><div><h1>Entregas</h1><p>Quadro de tarefas — arraste entre colunas</p></div><div className="sp" />
       <input className="input" placeholder="Filtrar…" value={q} onChange={e => setQ(e.target.value)} style={{ width: 180 }} />
       <select className="input" value={pf} onChange={e => setPf(e.target.value)} style={{ width: 170 }}><option value="all">Todos os projetos</option>{data.projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select>
       <Seg value={view} onChange={setView} options={[{ v: 'quadro', l: 'Quadro' }, { v: 'lista', l: 'Lista' }]} />
       <Btn variant="primary" onClick={() => editTask({ projectId: pf === 'all' ? undefined : pf, start: t })}><Icon n="plus" /> Tarefa</Btn></div>
 
-    {view === 'quadro' ? <div className="board">{COLS.map(s => {
+    <div className="fill">{view === 'quadro' ? <div className="board">{COLS.map(s => {
       const items = tasks.filter(x => x.status === s).sort((a, b) => (a.due ?? '9').localeCompare(b.due ?? '9'))
       return <div key={s} className={`col ${over === s ? 'drop' : ''}`} onDragOver={e => { e.preventDefault(); setOver(s) }} onDragLeave={() => setOver(undefined)}
         onDrop={e => { setOver(undefined); upsertTask({ id: e.dataTransfer.getData('text'), status: s }) }}>
         <div className="col-h"><span className="dot" style={{ background: CC[s] }} />{STATUS_LABEL[s]}<span className="muted" style={{ fontWeight: 500 }}>{items.length}</span>
           <button className="btn ghost sm" style={{ marginLeft: 'auto' }} onClick={() => editTask({ status: s, start: t })}><Icon n="plus" s={14} /></button></div>
-        <AnimatePresence initial={false}>{items.map(x => <motion.div key={x.id} layout layoutId={x.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: .96 }} transition={spring}>
+        <div className="scroll"><AnimatePresence initial={false}>{items.map(x => <motion.div key={x.id} layout layoutId={x.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: .96 }} transition={spring}>
           <div className="tcard" draggable onDragStart={e => e.dataTransfer.setData('text', x.id)} onClick={() => editTask(x)}>
             <div className="t" style={{ textDecoration: s === 'done' ? 'line-through' : undefined, opacity: s === 'done' ? .65 : 1 }}>{x.title}</div>
             <div className="meta">
@@ -49,10 +49,10 @@ export default function Board() {
               <span title={`Prioridade ${x.priority}`} style={{ color: PR[x.priority], fontWeight: 800 }}>{'▮'.repeat(x.priority === 'alta' ? 3 : x.priority === 'media' ? 2 : 1)}</span>
               {x.estimate ? <span className="mono" style={{ marginLeft: 'auto' }}>{x.estimate}h</span> : null}
             </div>
-          </div></motion.div>)}</AnimatePresence>
+          </div></motion.div>)}</AnimatePresence></div>
       </div>
     })}</div> :
-      <div className="card"><div className="card-b">
+      <div className="card" style={{ height: '100%' }}><div className="card-b scroll">
         <div className="list-row muted" style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.08em' }}><span style={{ width: 22 }} /><span style={{ flex: 1 }}>Tarefa</span><span style={{ width: 150 }}>Projeto</span><span style={{ width: 110 }}>Status</span><span style={{ width: 100 }}>Prazo</span><span style={{ width: 50 }}>Horas</span></div>
         {[...tasks].sort((a, b) => (a.due ?? '9').localeCompare(b.due ?? '9')).map(x => <motion.div layout key={x.id} className="list-row" style={{ cursor: 'pointer' }} onClick={() => editTask(x)}>
           <input type="checkbox" checked={x.status === 'done'} onClick={e => e.stopPropagation()} onChange={e => upsertTask({ id: x.id, status: e.target.checked ? 'done' : 'todo' })} style={{ accentColor: 'var(--accent)', width: 16, height: 16 }} />
@@ -61,6 +61,6 @@ export default function Board() {
           <span style={{ width: 110 }}><span className="chip" style={{ color: CC[x.status] }}>{STATUS_LABEL[x.status]}</span></span>
           <span style={{ width: 100 }}><Due due={x.due} done={x.status === 'done'} /></span><span className="mono" style={{ width: 50 }}>{x.estimate ?? ''}</span>
         </motion.div>)}
-      </div></div>}
+      </div></div>}</div>
   </Page>
 }

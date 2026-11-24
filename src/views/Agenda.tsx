@@ -34,13 +34,13 @@ export default function Agenda() {
 
   return <Page wide>
     <div className="head">
-      <div><div className="kicker">Kairotec · Semana</div><h1>Sua <em>agenda</em></h1><p>{MONTHS[ws.getMonth()]} {ws.getFullYear()} · clique num horário para criar, arraste para mover</p></div><div className="sp" />
+      <div><h1>Agenda</h1><p>{MONTHS[ws.getMonth()]} {ws.getFullYear()} · clique num horário para criar, arraste para mover</p></div><div className="sp" />
       <Btn variant="icon" onClick={() => setAnchor(addDays(anchor, -7))}><Icon n="left" /></Btn>
       <Btn onClick={() => setAnchor(new Date())}>Hoje</Btn>
       <Btn variant="icon" onClick={() => setAnchor(addDays(anchor, 7))}><Icon n="right" /></Btn>
       <Btn variant="primary" onClick={() => editEvent()}><Icon n="plus" /> Evento</Btn>
     </div>
-    <div className="card" ref={scroller} style={{ height: 'calc(100vh - 170px)', overflow: 'auto' }}>
+    <div className="card" ref={scroller} style={{ flex: 1, minHeight: 0, maxHeight: 'calc(100dvh - 160px)', overflow: 'auto', display: 'block' }}>
       <div className="week">
         <div className="hcol" />
         {days.map(d => <div key={iso(d)} className={`hcol ${iso(d) === t ? 'today' : ''}`}>{WD[d.getDay()]}<b>{d.getDate()}</b>

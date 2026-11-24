@@ -28,7 +28,7 @@ export default function Planner() {
 
   return <Page wide>
     <div className="head">
-      <div><div className="kicker">Kairotec · Planner mensal · {cur.y}</div><h1>{MONTHS[cur.m]} <em>planner</em></h1><p>Planner mensal — arraste itens entre os dias. Duplo clique cria evento.</p></div>
+      <div><h1>{MONTHS[cur.m]} <span className="muted" style={{ fontWeight: 500 }}>{cur.y}</span></h1><p>Planner mensal — arraste itens entre os dias. Duplo clique cria evento.</p></div>
       <div className="sp" />
       <Seg value={show} onChange={setShow} options={[{ v: 'tudo', l: 'Tudo' }, { v: 'tarefas', l: 'Entregas' }, { v: 'eventos', l: 'Eventos' }]} />
       <div className="row" style={{ gap: 4 }}>
@@ -38,7 +38,7 @@ export default function Planner() {
       </div>
       <Btn onClick={async () => { download(await buildWorkbook(data), `Kairotec-${MONTHS[cur.m]}-${cur.y}.xlsx`); toast('Planilha gerada') }}><Icon n="sheet" /> Exportar .xlsx</Btn>
     </div>
-    <div className="card" style={{ overflow: 'hidden' }}>
+    <div className="card planner-card" style={{ overflow: 'hidden' }}>
       <AnimatePresence mode="popLayout" initial={false} custom={dir}>
         <motion.table key={`${cur.y}-${cur.m}`} className="xl" custom={dir}
           initial={{ opacity: 0, x: dir * 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: dir * -30 }} transition={{ duration: .25, ease: [.2, .8, .2, 1] }}>
@@ -50,16 +50,16 @@ export default function Planner() {
             const items = evs.length + tks.length
             return <td key={ds} className={`${out ? 'out' : ''} ${we ? 'we' : ''} ${drop === ds ? 'drop' : ''}`}
               onDragOver={e => { e.preventDefault(); setDrop(ds) }} onDragLeave={() => setDrop(undefined)} onDrop={e => onDrop(ds, e)}
-              onDoubleClick={() => editEvent({ date: ds, start: '09:00', end: '10:00' })}>
+              onDoubleClick={() => editEvent({ date: ds, start: '09:00', end: '10:00' })}><div className="cellwrap">
               <div className="n"><span className={ds === t ? 'today' : ''}>{day.getDate()}</span>
                 <span className="row" style={{ gap: 2 }}><button className="cellbtn" title="Nova entrega" onClick={() => editTask({ due: ds, start: ds })}>◆</button><button className="cellbtn" title="Novo evento" onClick={() => editEvent({ date: ds, start: '09:00', end: '10:00' })}>+</button></span></div>
-              {evs.slice(0, 3).map(e => <div key={e.id} className="it" draggable onDragStart={ev => ev.dataTransfer.setData('text', `e:${e.id}`)}
+              {evs.slice(0, 2).map(e => <div key={e.id} className="it" draggable onDragStart={ev => ev.dataTransfer.setData('text', `e:${e.id}`)}
                 style={{ borderColor: proj(e.projectId)?.color ?? 'var(--accent)' }} onClick={() => editEvent(e)}><span className="mono">{e.start}</span> {e.title}</div>)}
-              {tks.slice(0, 3).map(x => <div key={x.id} className="it" draggable onDragStart={ev => ev.dataTransfer.setData('text', `t:${x.id}`)}
+              {tks.slice(0, 2).map(x => <div key={x.id} className="it" draggable onDragStart={ev => ev.dataTransfer.setData('text', `t:${x.id}`)}
                 style={{ borderColor: proj(x.projectId)?.color ?? 'var(--muted)', textDecoration: x.status === 'done' ? 'line-through' : undefined, color: x.status !== 'done' && ds < t ? 'var(--bad)' : undefined }}
                 onClick={() => editTask(x)}>{x.status === 'done' ? '✓' : '◆'} {x.title}</div>)}
-              {items > 6 && <div className="muted" style={{ fontSize: 11, padding: '0 10px' }}>+{items - 6} mais</div>}
-            </td>
+              {items > 4 && <div className="muted" style={{ fontSize: 11, padding: '0 10px' }}>+{items - 4} mais</div>}
+            </div></td>
           })}</tr>)}</tbody>
         </motion.table>
       </AnimatePresence>

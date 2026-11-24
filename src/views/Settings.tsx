@@ -5,11 +5,11 @@ import { buildWorkbook } from '../lib/excel'
 import type { Data } from '../lib/types'
 
 export const THEMES = [
-  { id: 'bordeaux', name: 'Bordeaux', c: ['#f6eee3', '#f3d6de', '#4a1a26'] },
-  { id: 'cafe', name: 'Café', c: ['#cee3e9', '#ffeed7', '#6b0b0e'] },
-  { id: 'rose', name: 'Rosé', c: ['#f3d6de', '#fbf3ee', '#7a2236'] },
-  { id: 'ameixa', name: 'Ameixa', c: ['#2a1118', '#3a1a23', '#f3c9d4'] },
-  { id: 'celeste', name: 'Celeste', c: ['#dbe8ee', '#f7f1e8', '#23324a'] },
+  { id: 'claro', name: 'Claro', c: ['#f7f7f5', '#ffffff', '#2b2b2b'] },
+  { id: 'grafite', name: 'Grafite', c: ['#111214', '#1c1d21', '#d9c7a3'] },
+  { id: 'rose', name: 'Rosé', c: ['#faf6f4', '#ffffff', '#7a2236'] },
+  { id: 'celeste', name: 'Celeste', c: ['#f3f7f9', '#ffffff', '#2f5d7c'] },
+  { id: 'floresta', name: 'Floresta', c: ['#0f1512', '#18221d', '#9fd3a9'] },
 ]
 
 export default function Settings() {
@@ -28,8 +28,8 @@ export default function Settings() {
   const connectExcel = async () => { try { const h = await pickExcel(); await syncAll(data); setSync({ excelName: h.name }); toast('Planilha conectada e atualizada') } catch { /* cancelado */ } }
 
   return <Page>
-    <div className="head"><div><div className="kicker">Kairotec · Preferências</div><h1>Seus <em>ajustes</em></h1><p>Aparência, sincronização e dados</p></div></div>
-    <div className="grid" style={{ gap: 16 }}>
+    <div className="head"><div><h1>Ajustes</h1><p>Aparência, sincronização e dados</p></div></div>
+    <div className="settings"><div className="col-s">
       <Card title="Aparência">
         <div className="themes">{THEMES.map(t => <button key={t.id} className={`tsw ${s.theme === t.id ? 'on' : ''}`} onClick={() => setSettings({ theme: t.id })}>
           <div className="pv" style={{ background: t.c[0] }}><div style={{ background: t.c[1] }} /><div style={{ padding: 8, display: 'grid', gap: 5, alignContent: 'start' }}><i style={{ height: 6, width: '60%', borderRadius: 4, background: t.c[2] }} /><i style={{ height: 6, width: '80%', borderRadius: 4, background: t.c[1] }} /><i style={{ height: 6, width: '40%', borderRadius: 4, background: t.c[1] }} /></div></div>
@@ -59,6 +59,7 @@ export default function Settings() {
         <div className="muted" style={{ fontSize: 12, marginTop: 8 }}>Dica: se a planilha estiver aberta no Excel o Windows bloqueia a gravação; o app avisa e tenta de novo na próxima alteração.</div>
       </Card>
 
+      </div><div className="col-s">
       <Card title="Projetos">
         {data.projects.map(p => <div key={p.id} className="list-row">
           <input type="color" value={p.color} onChange={e => upsertProject({ id: p.id, color: e.target.value })} style={{ width: 28, height: 28, border: 0, background: 'none', padding: 0 }} />
@@ -76,6 +77,6 @@ export default function Settings() {
           <Btn variant="ghost" style={{ color: 'var(--bad)', marginLeft: 'auto' }} onClick={() => { if (confirm('Apagar TODOS os dados locais? (o arquivo de nuvem não é apagado)')) { localStorage.removeItem('kairotec:data'); location.reload() } }}>Resetar app</Btn>
         </div>
       </Card>
-    </div>
+    </div></div>
   </Page>
 }

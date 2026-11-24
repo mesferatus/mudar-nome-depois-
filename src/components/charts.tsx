@@ -11,8 +11,8 @@ export function Donut({ parts, size = 150, label, sub }: { parts: { v: number; c
         return <motion.circle key={i} cx={size / 2} cy={size / 2} r={r} fill="none" stroke={p.c} strokeWidth={14} strokeLinecap="butt"
           transform={`rotate(-90 ${size / 2} ${size / 2})`} strokeDasharray={`${len} ${C}`} initial={{ strokeDashoffset: len }} animate={{ strokeDashoffset: -off }} transition={{ duration: .9, delay: i * .08, ease: [.2, .8, .2, 1] }} />
       })}
-      <text x="50%" y="48%" textAnchor="middle" fontSize="34" fontFamily="DM Serif Display, serif" fill="var(--wine)">{label}</text>
-      <text x="50%" y="63%" textAnchor="middle" fontSize="15" fontFamily="Instrument Serif, serif" fontStyle="italic" fill="var(--muted)">{sub}</text>
+      <text x="50%" y="48%" textAnchor="middle" fontSize="26" fontWeight="800" fill="var(--text)">{label}</text>
+      <text x="50%" y="63%" textAnchor="middle" fontSize="11" fill="var(--muted)">{sub}</text>
     </svg>
     <div style={{ display: 'grid', gap: 6 }}>{parts.map(p => <div key={p.l} className="row" style={{ gap: 8, fontSize: 12 }}><span className="dot" style={{ background: p.c }} /> {p.l} <b style={{ marginLeft: 'auto', paddingLeft: 12 }}>{p.v}</b></div>)}</div>
   </div>
