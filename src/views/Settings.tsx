@@ -1,8 +1,10 @@
+import { useState } from 'react'
 import { useStore } from '../lib/store'
 import { Page, Card, Btn, Icon, Seg } from '../components/ui'
 import { fsSupported, pickCloud, pickExcel, readCloud, forget, download, syncAll, regrant } from '../lib/sync'
 import { buildWorkbook } from '../lib/excel'
 import { parseIcs, icsKey } from '../lib/ics'
+import { connectSync, disconnectSync, mergeData, syncConnected } from '../lib/cloudsync'
 import type { Data } from '../lib/types'
 
 export const THEMES = [
@@ -21,6 +23,8 @@ export const THEMES = [
 ]
 
 export default function Settings() {
+  const [token, setToken] = useState('')
+  const [busy, setBusy] = useState(false)
   const { data, setSettings, sync, setSync, replaceAll, toast, upsertProject, removeProject, upsertEvent } = useStore()
   const s = data.settings
   const fs = fsSupported()
@@ -48,6 +52,20 @@ export default function Settings() {
         </div>
       </Card>
 
+      <Card title="Sincronizar entre aparelhos" sub={syncConnected() ? (sync.cloudSync === 'erro' ? '⚠ erro' : '● conectado') : ''}>
+        {syncConnected() ? <div className="list-row"><span style={{ fontSize: 18 }}>🔄</span><div style={{ flex: 1 }}><b>Sincronização ligada</b><div className="muted" style={{ fontSize: 12 }}>PC, celular e o app instalado ficam iguais sozinhos (envia ao salvar, busca ao abrir).</div></div>
+          <Btn variant="sm ghost" onClick={() => { disconnectSync(); setSync({ cloudSync: undefined }); toast('Sincronização desligada neste aparelho') }}>Desligar</Btn></div> : <>
+          <div className="muted" style={{ fontSize: 13, lineHeight: 1.6 }}>Guarda seus dados num <b>Gist secreto</b> da sua conta do GitHub. Faça uma vez em cada aparelho:<br />
+            1. <a href="https://github.com/settings/tokens/new?scopes=gist&description=Kairotec" target="_blank" rel="noreferrer">Crie um token</a> (marque só <b>gist</b> e escolha "No expiration").<br />2. Cole abaixo e conecte. No segundo aparelho, use o mesmo token — ele encontra seus dados sozinho.</div>
+          <div className="row" style={{ marginTop: 10 }}><input className="input" type="password" placeholder="ghp_… ou github_pat_…" value={token} onChange={e => setToken(e.target.value)} />
+            <Btn variant="primary" disabled={!token.trim() || busy} onClick={async () => {
+              setBusy(true)
+              try { const { remote } = await connectSync(token, data); if (remote) { replaceAll(mergeData(data, remote)); toast('Conectado · dados dos outros aparelhos trazidos ✨') } else toast('Conectado · seus dados estão na nuvem ✨'); setSync({ cloudSync: 'ok' }); setToken('') }
+              catch (e) { toast(`Não conectou: ${(e as Error).message}`) } finally { setBusy(false) }
+            }}>{busy ? 'Conectando…' : 'Conectar'}</Btn></div>
+          <div className="muted" style={{ fontSize: 11, marginTop: 8 }}>O Gist secreto não aparece no seu perfil nem em buscas, mas quem tiver o link consegue abrir — não guarde senhas nas notas.</div>
+        </>}
+      </Card>
       <Card title="Nuvem & Excel" sub={sync.status === 'saving' ? 'salvando…' : sync.lastSaved ? `salvo às ${sync.lastSaved}` : ''}>
         {!fs && <div className="out" style={{ marginTop: 0, marginBottom: 12, color: 'var(--warn)' }}>Seu navegador não permite gravar direto em arquivos. Use Microsoft Edge ou Google Chrome — ou use os botões de exportar abaixo.</div>}
         {sync.error && <div className="out" style={{ marginTop: 0, marginBottom: 12, color: 'var(--bad)' }}>{sync.error} <Btn variant="sm" onClick={async () => { await regrant(); const r = await syncAll(data); setSync({ error: r.error, status: r.error ? 'error' : 'saved' }) }}>Tentar de novo</Btn></div>}

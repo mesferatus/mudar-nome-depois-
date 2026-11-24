@@ -8,7 +8,7 @@ import { buildWorkbook } from './excel'
  * OneDrive / SharePoint / Google Drive e o cliente de sincronização cuida do resto.
  * Usa a File System Access API (Edge / Chrome).
  */
-export type SyncState = { cloudName?: string; excelName?: string; status: 'idle' | 'saving' | 'saved' | 'error'; lastSaved?: string; error?: string }
+export type SyncState = { cloudName?: string; excelName?: string; status: 'idle' | 'saving' | 'saved' | 'error'; lastSaved?: string; error?: string; cloudSync?: 'ok' | 'erro' }
 
 type Handle = FileSystemFileHandle & {
   queryPermission?: (o: { mode: string }) => Promise<PermissionState>

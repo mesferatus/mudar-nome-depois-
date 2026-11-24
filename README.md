@@ -37,6 +37,15 @@ Atalhos: `Ctrl+K` paleta de comandos · `Alt+1…7` trocar de aba · `N` nova ta
 - **Outlook:** Ajustes → Integrações → importar `.ics`
 - **Lembretes:** notificação 10 min antes dos eventos e resumo das entregas do dia
 
+## Sincronizar PC e celular
+
+Ajustes → **Sincronizar entre aparelhos**: crie um token do GitHub só com permissão *gist* e cole em cada aparelho. Os dados ficam num Gist secreto da sua conta; o app envia ao salvar e busca ao abrir/voltar, juntando mudanças feitas em aparelhos diferentes.
+
+## Insights e foco
+
+- **▶ Foco** (pomodoro 25 min) em qualquer tarefa: o tempo vai para a tarefa.
+- **Insights**: entregas, % no prazo, lead time, horas de foco e de reunião, por projeto e por semana, estimado × real, dias mais produtivos.
+
 ## Programa para Windows (.exe)
 
 A cada atualização na `main`, o GitHub gera o instalador **Kairotec-Setup.exe** e publica em **Releases** (`.github/workflows/desktop.yml`). Instale uma vez; o app se atualiza sozinho e avisa **"Reiniciar e atualizar"**. Para testar localmente: `npm run desktop`.

@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useRef, useState, type R
 import type { Data, Task, CalEvent, Note, Project, Settings } from './types'
 import { iso, addDays, parse } from './date'
 import { syncAll, loadHandles, type SyncState } from './sync'
+import { pullSync, pushSync, syncConnected } from './cloudsync'
 import { DOODLES } from './art'
 import { logoSvg } from '../components/Logo'
 
@@ -96,6 +97,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [sync, setSyncS] = useState<SyncState>({ cloudName: undefined, excelName: undefined, status: 'idle' })
   const [toasts, setToasts] = useState<{ id: string; msg: string; action?: ToastAction }[]>([])
   const timer = useRef<number>()
+  const skipPush = useRef(false)
+  // busca a versão da nuvem ao abrir, ao voltar para o app e a cada 2 min
+  useEffect(() => {
+    const pull = () => { if (!syncConnected()) return; pullSync(ref.current).then(d => { if (d) { skipPush.current = d.updatedAt === ref.current.updatedAt; ref.current = d; setData(d); setSync({ cloudSync: 'ok' }) } }).catch(() => setSync({ cloudSync: 'erro' })) }
+    pull()
+    const v = () => { if (document.visibilityState === 'visible') pull() }
+    document.addEventListener('visibilitychange', v); window.addEventListener('focus', pull); const i = setInterval(pull, 120000)
+    return () => { document.removeEventListener('visibilitychange', v); window.removeEventListener('focus', pull); clearInterval(i) }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
   const first = useRef(true)
 
   const setSync = (s: Partial<SyncState>) => setSyncS(p => ({ ...p, ...s }))
@@ -118,7 +129,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     clearTimeout(timer.current)
     timer.current = window.setTimeout(() => {
       setSync({ status: 'saving' })
-      syncAll(data).then(r => setSync({ status: r.error ? 'error' : 'saved', lastSaved: new Date().toLocaleTimeString('pt-BR'), error: r.error }))
+      const cloud = skipPush.current ? Promise.resolve() : pushSync(data).then(() => setSync({ cloudSync: 'ok' })).catch(e => setSync({ cloudSync: 'erro', error: `Sincronização: ${(e as Error).message}` }))
+      skipPush.current = false
+      Promise.all([syncAll(data), cloud]).then(([r]) => setSync({ status: r.error ? 'error' : 'saved', lastSaved: new Date().toLocaleTimeString('pt-BR'), error: r.error }))
     }, 1200)
   }, [data])
 
