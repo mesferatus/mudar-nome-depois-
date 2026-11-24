@@ -1,9 +1,10 @@
 import { Fragment, useEffect, useMemo, useState } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, MotionConfig, motion } from 'framer-motion'
 import { StoreProvider, useStore } from './lib/store'
 import { EditorsProvider, useEditors } from './components/editors'
 import { Icon, spring } from './components/ui'
 import { Logo } from './components/Logo'
+import { requestNote } from './lib/nav'
 import { Onboarding } from './components/Onboarding'
 import { useReminders } from './lib/reminders'
 import Dashboard from './views/Dashboard'
@@ -35,7 +36,7 @@ function Palette({ open, close, go }: { open: boolean; close: () => void; go: (v
       ...THEMES.map(t => ({ l: `Tema: ${t.name}`, h: 'tema', run: () => setSettings({ theme: t.id }) })),
       ...data.tasks.map(t => ({ l: t.title, h: 'tarefa', run: () => editTask(t) })),
       ...data.events.map(e => ({ l: e.title, h: `evento ${e.date.slice(5).split('-').reverse().join('/')}`, run: () => editEvent(e) })),
-      ...data.notes.filter(n => !n.trashed).map(n => ({ l: `${n.icon ?? '📄'} ${n.title}`, h: 'página', run: () => go('notas') })),
+      ...data.notes.filter(n => !n.trashed).map(n => ({ l: `${n.icon ?? '📄'} ${n.title}`, h: 'página', run: () => { requestNote(n.id); go('notas') } })),
     ]
     const s = q.toLowerCase()
     return base.filter(o => o.l.toLowerCase().includes(s)).slice(0, 9)
@@ -86,6 +87,7 @@ function Shell() {
   }, [quick])
   const cur = NAV.find(n => n.id === view) ?? NAV[0]
   const Cur = cur.C
+  useEffect(() => { document.title = `${cur.l} · Kairotec` }, [cur.l])
   const overdue = data.tasks.filter(t => t.status !== 'done' && t.due && t.due < new Date().toISOString().slice(0, 10)).length
   const hello = (() => { const h = new Date().getHours(); return h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite' })()
 
@@ -113,7 +115,7 @@ function Shell() {
       </div>
     </nav>
     <main className="main"><AnimatePresence mode="wait"><motion.div key={view} style={{ height: view === 'notas' ? '100%' : undefined }}><Cur /></motion.div></AnimatePresence></main>
-    {!['ajustes', 'notas'].includes(view) && <motion.button className="fab" onClick={() => quick({ kind: view === 'calendario' ? 'event' : 'task' })} initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} whileHover={{ y: -2 }} whileTap={{ scale: .92 }} transition={spring} aria-label="Novo">
+    {!['ajustes', 'notas'].includes(view) && <motion.button className="fab" onClick={() => quick({ kind: view === 'calendario' ? 'event' : 'task' })} initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} whileHover={{ y: -2 }} whileTap={{ scale: .92 }} transition={spring} aria-label="Novo" title="Criar (tecla N)">
       <Icon n="plus" s={20} /> Novo</motion.button>}
     <Palette open={pal} close={() => setPal(false)} go={setView} />
     <AnimatePresence>{!data.settings.onboarded && <Onboarding key="ob" />}</AnimatePresence>
@@ -122,5 +124,5 @@ function Shell() {
 }
 
 export default function App() {
-  return <StoreProvider><EditorsProvider><Shell /></EditorsProvider></StoreProvider>
+  return <MotionConfig reducedMotion="user"><StoreProvider><EditorsProvider><Shell /></EditorsProvider></StoreProvider></MotionConfig>
 }

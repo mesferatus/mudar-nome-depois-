@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useStore } from '../lib/store'
 import { Btn, Icon, Empty, spring } from '../components/ui'
@@ -8,12 +8,13 @@ import { TEMPLATES } from '../lib/blocks'
 import type { Note } from '../lib/types'
 import { Database, PropValue, newDb } from '../components/Database'
 import { download } from '../lib/sync'
+import { takeNote } from '../lib/nav'
 
 const tagsOf = (body: string) => [...new Set([...body.matchAll(/(?:^|\s)#([\p{L}\w-]+)/gu)].map(m => m[1]))]
 
 export default function Notes() {
   const { data, upsertNote, removeNote, restoreNote, purgeNote, toast } = useStore()
-  const [sel, setSel] = useState<string | undefined>(() => data.notes.find(n => n.pinned)?.id ?? data.notes.find(n => !n.parentId)?.id)
+  const [sel, setSel] = useState<string | undefined>(() => takeNote() ?? data.notes.find(n => n.pinned)?.id ?? data.notes.find(n => !n.parentId)?.id)
   const [q, setQ] = useState('')
   const [listOpen, setListOpen] = useState(true)
   const [picker, setPicker] = useState<'icon' | 'cover' | 'tpl' | 'menu' | 'move' | null>(null)
@@ -21,6 +22,7 @@ export default function Notes() {
   const note = data.notes.find(n => n.id === sel)
 
   const open = (id?: string) => { setSel(id); setListOpen(false); setPicker(null) }
+  useEffect(() => { const h = (e: Event) => { takeNote(); open((e as CustomEvent<string>).detail) }; window.addEventListener('kairotec:open-note', h); return () => window.removeEventListener('kairotec:open-note', h) }, [])
   const kids = (id?: string) => data.notes.filter(n => !n.trashed && (n.parentId ?? undefined) === id && (id ? true : !n.parentId)).sort((a, b) => a.title.localeCompare(b.title))
   const isDb = (id?: string) => !!data.notes.find(n => n.id === id)?.db
   const parentDb = note?.parentId ? data.notes.find(n => n.id === note.parentId && n.db) : undefined
