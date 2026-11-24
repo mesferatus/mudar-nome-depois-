@@ -4,12 +4,12 @@ import { STATUS_LABEL, PRIORITY_LABEL } from './types'
 import { MONTHS, WD, iso, monthGrid, parse, today } from './date'
 import { metrics } from './metrics'
 
-const INK = 'FF1F2328', PAPER = 'FFFAF8F4', LINE = 'FFE4DFD6', MUTED = 'FF8A8478', ACCENT = 'FF3E6FD8'
+const INK = 'FF4A1A26', PAPER = 'FFFBF3E6', LINE = 'FFE2D2C4', MUTED = 'FF8A6A6F', ACCENT = 'FF4A1A26'
 const fill = (argb: string): ExcelJS.Fill => ({ type: 'pattern', pattern: 'solid', fgColor: { argb } })
 const border = (c = LINE): Partial<ExcelJS.Borders> => ({ top: { style: 'thin', color: { argb: c } }, left: { style: 'thin', color: { argb: c } }, bottom: { style: 'thin', color: { argb: c } }, right: { style: 'thin', color: { argb: c } } })
 const hex = (c?: string) => 'FF' + (c ?? '#8a8f98').replace('#', '').toUpperCase()
-const FONT = 'Aptos'
-const STATUS_FILL: Record<string, string> = { todo: 'FFEDEBE6', doing: 'FFDDE7FB', review: 'FFF7E7CF', done: 'FFDCEFE2' }
+const FONT = 'Georgia'
+const STATUS_FILL: Record<string, string> = { todo: 'FFCBDDE6', doing: 'FFF3D6DE', review: 'FFF6E7C8', done: 'FFE8D5D9' }
 
 function title(ws: ExcelJS.Worksheet, text: string, sub: string, span: number) {
   ws.mergeCells(1, 1, 1, span); ws.mergeCells(2, 1, 2, span)
@@ -86,7 +86,7 @@ export async function buildWorkbook(d: Data): Promise<Blob> {
         b.font = { name: FONT, size: 9, color: { argb: inMonth ? INK : 'FFC9C3B8' } }
         n.border = { top: { style: 'thin', color: { argb: LINE } }, left: { style: 'thin', color: { argb: LINE } }, right: { style: 'thin', color: { argb: LINE } } }
         b.border = { bottom: { style: 'thin', color: { argb: LINE } }, left: { style: 'thin', color: { argb: LINE } }, right: { style: 'thin', color: { argb: LINE } } }
-        if (c >= 5 && d.settings.weekStart === 1) { if (inMonth) n.fill = fill('FFF2EFE9'); b.fill = fill(inMonth ? 'FFF7F5F1' : 'FFFFFFFF') }
+        if (c >= 5 && d.settings.weekStart === 1) { if (inMonth) n.fill = fill('FFCBDDE6'); b.fill = fill(inMonth ? 'FFE9F1F5' : 'FFFFFFFF') }
       }
     }
   }

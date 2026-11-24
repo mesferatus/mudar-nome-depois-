@@ -9,9 +9,9 @@ export const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().to
 function seed(): Data {
   const t = new Date(), d = (n: number) => iso(addDays(t, n)), now = new Date().toISOString()
   const projects: Project[] = [
-    { id: 'p1', name: 'BI Logística', color: '#5b8def' },
-    { id: 'p2', name: 'Software interno', color: '#e0a458' },
-    { id: 'p3', name: 'Pessoal', color: '#6fbf8e' },
+    { id: 'p1', name: 'BI Logística', color: '#7fa7bd' },
+    { id: 'p2', name: 'Software interno', color: '#c97a8e' },
+    { id: 'p3', name: 'Pessoal', color: '#b8913f' },
   ]
   const mk = (title: string, projectId: string, status: Task['status'], priority: Task['priority'], start: number, due: number, est = 4): Task =>
     ({ id: uid(), title, projectId, status, priority, start: d(start), due: d(due), estimate: est, tags: [], createdAt: now, doneAt: status === 'done' ? d(due - 1) : undefined })
@@ -47,12 +47,12 @@ Este é o seu caderno. Algumas dicas:
 - [x] Abrir o app pela primeira vez` },
       { id: uid(), title: 'Ideias de BI', folder: 'Trabalho', tags: ['bi'], updatedAt: now, body: '# Ideias de BI\n\n- Lead time por fornecedor\n- Curva ABC de peças\n- OTIF semanal #logistica' },
     ],
-    settings: { theme: 'grafite', userName: '', weekStart: 1, autoExcel: true, autoCloud: true },
+    settings: { theme: 'bordeaux', userName: '', weekStart: 1, autoExcel: true, autoCloud: true },
   }
 }
 
 function load(): Data {
-  try { const raw = localStorage.getItem(KEY); if (raw) return { ...seed(), ...JSON.parse(raw) } } catch { /* ignore */ }
+  try { const raw = localStorage.getItem(KEY); if (raw) { const d = { ...seed(), ...JSON.parse(raw) }; if (['grafite', 'papel', 'floresta', 'noite', 'areia'].includes(d.settings.theme)) d.settings = { ...d.settings, theme: 'bordeaux' }; return d } } catch { /* ignore */ }
   return seed()
 }
 

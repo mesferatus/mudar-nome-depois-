@@ -67,11 +67,11 @@ function Shell() {
 
   return <div className="app">
     <aside className="side">
-      <div className="brand"><div className="brand-mark">K</div>Kairotec</div>
+      <div className="brand"><span className="brand-name">Kairotec</span><span className="brand-script">planner</span></div>
       <button className="nav" onClick={() => setPal(true)} style={{ border: '1px solid var(--line)', marginBottom: 10 }}><Icon n="search" /><span>Buscar</span><kbd>Ctrl K</kbd></button>
       {NAV.map(n => <motion.button whileTap={{ scale: .97 }} key={n.id} className={`nav ${view === n.id ? 'on' : ''}`} onClick={() => setView(n.id)}>
         {view === n.id && <motion.div layoutId="navpill" className="nav-pill" transition={spring} />}
-        <Icon n={n.i} /><span>{n.l}</span>
+        <Icon n={n.i} /><span className="nav-l">{n.l}</span>
         {n.id === 'entregas' && overdue > 0 ? <span className="chip" style={{ marginLeft: 'auto', color: 'var(--bad)' }}>{overdue}</span> : <kbd>Alt {n.k}</kbd>}
       </motion.button>)}
       <div className="side-sec">Projetos</div>

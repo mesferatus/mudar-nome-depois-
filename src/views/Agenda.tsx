@@ -34,7 +34,7 @@ export default function Agenda() {
 
   return <Page wide>
     <div className="head">
-      <div><h1>Agenda</h1><p>{MONTHS[ws.getMonth()]} {ws.getFullYear()} · clique num horário para criar, arraste para mover</p></div><div className="sp" />
+      <div><div className="kicker">Kairotec · Semana</div><h1>Sua <em>agenda</em></h1><p>{MONTHS[ws.getMonth()]} {ws.getFullYear()} · clique num horário para criar, arraste para mover</p></div><div className="sp" />
       <Btn variant="icon" onClick={() => setAnchor(addDays(anchor, -7))}><Icon n="left" /></Btn>
       <Btn onClick={() => setAnchor(new Date())}>Hoje</Btn>
       <Btn variant="icon" onClick={() => setAnchor(addDays(anchor, 7))}><Icon n="right" /></Btn>

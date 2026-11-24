@@ -98,7 +98,7 @@ export default function Routines() {
   ]
 
   return <Page>
-    <div className="head"><div><h1>Rotinas</h1><p>Assistentes que rodam localmente sobre seus dados — analisam, sugerem e só aplicam quando você confirma.</p></div></div>
+    <div className="head"><div><div className="kicker">Kairotec · Assistentes</div><h1>Rotinas <em>do dia a dia</em></h1><p>Assistentes que rodam localmente sobre seus dados — analisam, sugerem e só aplicam quando você confirma.</p></div><div className="sp" /><span className="stamp">✻ local</span></div>
     <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))' }}>
       {routines.map((r, i) => <Card key={r.id} delay={i * .05}>
         <div className="agent" style={{ padding: 0 }}>

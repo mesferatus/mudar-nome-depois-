@@ -28,7 +28,7 @@ export default function Planner() {
 
   return <Page wide>
     <div className="head">
-      <div><h1>{MONTHS[cur.m]} <span className="muted" style={{ fontWeight: 500 }}>{cur.y}</span></h1><p>Planner mensal — arraste itens entre os dias. Duplo clique cria evento.</p></div>
+      <div><div className="kicker">Kairotec · Planner mensal · {cur.y}</div><h1>{MONTHS[cur.m]} <em>planner</em></h1><p>Planner mensal — arraste itens entre os dias. Duplo clique cria evento.</p></div>
       <div className="sp" />
       <Seg value={show} onChange={setShow} options={[{ v: 'tudo', l: 'Tudo' }, { v: 'tarefas', l: 'Entregas' }, { v: 'eventos', l: 'Eventos' }]} />
       <div className="row" style={{ gap: 4 }}>

@@ -5,11 +5,11 @@ import { buildWorkbook } from '../lib/excel'
 import type { Data } from '../lib/types'
 
 export const THEMES = [
-  { id: 'grafite', name: 'Grafite', c: ['#111214', '#1c1d21', '#d9c7a3'] },
-  { id: 'papel', name: 'Papel', c: ['#f4f1ea', '#fbfaf7', '#2f3a4a'] },
-  { id: 'floresta', name: 'Floresta', c: ['#0f1512', '#18221d', '#9fd3a9'] },
-  { id: 'noite', name: 'Noite', c: ['#0d1020', '#151a33', '#9aa8ff'] },
-  { id: 'areia', name: 'Areia', c: ['#f3ece1', '#faf6ef', '#b5562f'] },
+  { id: 'bordeaux', name: 'Bordeaux', c: ['#f6eee3', '#f3d6de', '#4a1a26'] },
+  { id: 'cafe', name: 'Café', c: ['#cee3e9', '#ffeed7', '#6b0b0e'] },
+  { id: 'rose', name: 'Rosé', c: ['#f3d6de', '#fbf3ee', '#7a2236'] },
+  { id: 'ameixa', name: 'Ameixa', c: ['#2a1118', '#3a1a23', '#f3c9d4'] },
+  { id: 'celeste', name: 'Celeste', c: ['#dbe8ee', '#f7f1e8', '#23324a'] },
 ]
 
 export default function Settings() {
@@ -28,7 +28,7 @@ export default function Settings() {
   const connectExcel = async () => { try { const h = await pickExcel(); await syncAll(data); setSync({ excelName: h.name }); toast('Planilha conectada e atualizada') } catch { /* cancelado */ } }
 
   return <Page>
-    <div className="head"><div><h1>Ajustes</h1><p>Aparência, sincronização e dados</p></div></div>
+    <div className="head"><div><div className="kicker">Kairotec · Preferências</div><h1>Seus <em>ajustes</em></h1><p>Aparência, sincronização e dados</p></div></div>
     <div className="grid" style={{ gap: 16 }}>
       <Card title="Aparência">
         <div className="themes">{THEMES.map(t => <button key={t.id} className={`tsw ${s.theme === t.id ? 'on' : ''}`} onClick={() => setSettings({ theme: t.id })}>

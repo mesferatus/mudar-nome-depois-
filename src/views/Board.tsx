@@ -8,7 +8,7 @@ import { STATUS_LABEL } from '../lib/types'
 import { fmt, today, daysBetween } from '../lib/date'
 
 const COLS: Status[] = ['todo', 'doing', 'review', 'done']
-const CC: Record<Status, string> = { todo: 'var(--faint)', doing: 'var(--info)', review: 'var(--warn)', done: 'var(--ok)' }
+const CC: Record<Status, string> = { todo: 'var(--info)', doing: '#c97a8e', review: 'var(--warn)', done: 'var(--wine)' }
 const PR = { alta: 'var(--bad)', media: 'var(--warn)', baixa: 'var(--muted)' }
 
 export default function Board() {
@@ -28,7 +28,7 @@ export default function Board() {
   }
 
   return <Page wide>
-    <div className="head"><div><h1>Entregas</h1><p>Quadro de tarefas — arraste entre colunas</p></div><div className="sp" />
+    <div className="head"><div><div className="kicker">Kairotec · Quadro</div><h1>Entregas <em>em dia</em></h1><p>Quadro de tarefas — arraste entre colunas</p></div><div className="sp" />
       <input className="input" placeholder="Filtrar…" value={q} onChange={e => setQ(e.target.value)} style={{ width: 180 }} />
       <select className="input" value={pf} onChange={e => setPf(e.target.value)} style={{ width: 170 }}><option value="all">Todos os projetos</option>{data.projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select>
       <Seg value={view} onChange={setView} options={[{ v: 'quadro', l: 'Quadro' }, { v: 'lista', l: 'Lista' }]} />

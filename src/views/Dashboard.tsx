@@ -29,11 +29,11 @@ export default function Dashboard() {
     return { pts, total }
   }, [data])
 
-  const COLORS = { todo: 'var(--faint)', doing: 'var(--info)', review: 'var(--warn)', done: 'var(--ok)' }
+  const COLORS = { todo: 'var(--blue)', doing: 'var(--pink)', review: 'var(--muted)', done: 'var(--wine)' }
   return <Page>
-    <div className="head"><div><h1>{hello()}{data.settings.userName ? `, ${data.settings.userName}` : ''}.</h1>
+    <div className="head"><div><div className="kicker">Kairotec · Painel · {new Date().getFullYear()}</div><h1>{hello()}{data.settings.userName ? `, ${data.settings.userName}` : ''} <em>vamos lá</em></h1>
       <p>{WD[new Date().getDay()]}, {new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' })} · {m.overdue ? `${m.overdue} entrega(s) atrasada(s)` : 'tudo dentro do prazo'}</p></div>
-      <div className="sp" /><Btn onClick={() => editEvent()}><Icon n="cal" /> Evento</Btn><Btn variant="primary" onClick={() => editTask()}><Icon n="plus" /> Tarefa</Btn></div>
+      <div className="sp" /><span className="stamp">✻ foco</span><Btn onClick={() => editEvent()}><Icon n="cal" /> Evento</Btn><Btn variant="primary" onClick={() => editTask()}><Icon n="plus" /> Tarefa</Btn></div>
 
     <div className="grid kpis">
       {[
