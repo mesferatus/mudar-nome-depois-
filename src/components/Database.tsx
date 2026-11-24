@@ -24,7 +24,10 @@ export function PropValue({ prop, value, onChange, onAddOption }: { prop: Prop; 
   const [open, setOpen] = useState(false)
   const [q, setQ] = useState('')
   if (prop.type === 'checkbox') return <input type="checkbox" className="db-check" checked={!!value} onChange={e => onChange(e.target.checked)} />
-  if (prop.type === 'date') return <input type="date" className="db-in" value={(value as string) ?? ''} onChange={e => onChange(e.target.value || undefined)} />
+  if (prop.type === 'date') return <label className="db-date">
+    <span className={value ? '' : 'muted'}>{value ? new Date(value + 'T12:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}</span>
+    <input type="date" value={(value as string) ?? ''} onChange={e => onChange(e.target.value || undefined)} onClick={e => { try { e.currentTarget.showPicker() } catch { /* sem suporte */ } }} />
+  </label>
   if (prop.type === 'number') return <input type="number" className="db-in" value={(value as number) ?? ''} onChange={e => onChange(e.target.value === '' ? undefined : Number(e.target.value))} />
   if (prop.type === 'select') {
     const opt = prop.options?.find(o => o.name === value)

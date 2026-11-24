@@ -33,6 +33,7 @@ export function Seg<T extends string>({ value, options, onChange }: { value: T; 
 }
 
 export function Modal({ open, onClose, title, children, footer }: { open: boolean; onClose: () => void; title: string; children: ReactNode; footer?: ReactNode }) {
+  useEffect(() => { if (!open) return; const h = (e: KeyboardEvent) => e.key === 'Escape' && onClose(); window.addEventListener('keydown', h); return () => window.removeEventListener('keydown', h) }, [open, onClose])
   return <AnimatePresence>{open && (
     <motion.div className="overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onMouseDown={onClose}>
       <motion.div className="modal" initial={{ opacity: 0, y: 16, scale: .97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 8, scale: .98 }} transition={spring} onMouseDown={e => e.stopPropagation()}>
@@ -88,3 +89,6 @@ export function useIsMobile() {
   useEffect(() => { const mq = window.matchMedia(q); const h = () => setM(mq.matches); mq.addEventListener('change', h); return () => mq.removeEventListener('change', h) }, [])
   return m
 }
+
+/** "1 compromisso" / "2 compromissos". */
+export const plural = (n: number, um: string, varios: string) => `${n} ${n === 1 ? um : varios}`

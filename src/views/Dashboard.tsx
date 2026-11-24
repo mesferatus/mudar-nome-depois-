@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { useStore } from '../lib/store'
 import { metrics } from '../lib/metrics'
-import { Card, Page, Icon, Empty, CountUp } from '../components/ui'
+import { Card, Page, Icon, Empty, CountUp, plural } from '../components/ui'
 import { Donut, Area, Burndown } from '../components/charts'
 import { useEditors } from '../components/editors'
 import { fmt, today, addDays, iso, daysBetween } from '../lib/date'
@@ -38,10 +38,10 @@ export default function Dashboard() {
     <div className="dash-top">
       <motion.div className="hero" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ type: 'spring', stiffness: 260, damping: 26 }}>
         <div className="k">Entregas no prazo</div>
-        <div className="big"><CountUp value={m.onTimeRate} suffix="%" /></div>
-        <div className="sub">{m.open} tarefas ativas · {m.openHours}h planejadas</div>
+        <div className="big">{m.done ? <CountUp value={m.onTimeRate} suffix="%" /> : '—'}</div>
+        <div className="sub">{m.done ? '' : 'Conclua a primeira entrega para medir · '}{plural(m.open, 'tarefa ativa', 'tarefas ativas')} · {m.openHours}h planejadas</div>
         <div className="split">
-          <div><span className="k">Próximos 7 dias</span><b className="gold">{m.dueSoon} entregas</b></div>
+          <div><span className="k">Próximos 7 dias</span><b className="gold">{plural(m.dueSoon, 'entrega', 'entregas')}</b></div>
           <div><span className="k">Precisam de atenção</span><b style={{ color: m.overdue ? 'var(--bad)' : undefined }}>{m.overdue} atrasada{m.overdue === 1 ? '' : 's'}</b></div>
         </div>
       </motion.div>
@@ -65,7 +65,7 @@ export default function Dashboard() {
         <Donut parts={m.byStatus.map(s => ({ v: s.n, c: COLORS[s.status], l: STATUS_LABEL[s.status] }))} label={`${data.tasks.length ? Math.round((m.done / data.tasks.length) * 100) : 0}%`} sub="concluído" />
       </Card>
       <Card title="Burndown · 14 dias" sub={`${burn.total}h em aberto`} delay={.18}><Burndown points={burn.pts} /></Card>
-      <Card title="Seu dia" sub={`${todayEvents.length} compromissos · ${dueToday.length} entregas`} delay={.22}>
+      <Card title="Seu dia" sub={`${plural(todayEvents.length, 'compromisso', 'compromissos')} · ${plural(dueToday.length, 'entrega', 'entregas')}`} delay={.22}>
         <div className="scroll" style={{ height: '100%' }}>
           {todayEvents.length + dueToday.length === 0 ? <Empty icon="cal" text="Dia livre — bom momento para foco" action="Evento" onAction={() => quick({ kind: 'event' })} /> :
             <div className="tl">

@@ -37,6 +37,12 @@ Atalhos: `Ctrl+K` paleta de comandos · `Alt+1…7` trocar de aba · `N` nova ta
 - **Outlook:** Ajustes → Integrações → importar `.ics`
 - **Lembretes:** notificação 10 min antes dos eventos e resumo das entregas do dia
 
+## Programa para Windows (.exe)
+
+A cada atualização na `main`, o GitHub gera o instalador **Kairotec-Setup.exe** e publica em **Releases** (`.github/workflows/desktop.yml`). Instale uma vez; o app se atualiza sozinho e avisa **"Reiniciar e atualizar"**. Para testar localmente: `npm run desktop`.
+
+> Como o instalador não tem assinatura digital paga, o Windows pode mostrar "O Windows protegeu o computador" → clique em **Mais informações → Executar assim mesmo**.
+
 ## Atualizações automáticas (como na App Store)
 
 A cada mudança na branch `main`, o GitHub testa e publica o app no **GitHub Pages** (`.github/workflows/deploy.yml`). O app instalado verifica sozinho se há versão nova (ao abrir, ao voltar para ele e a cada 30 min) e mostra **"Nova versão ✨ · Atualizar"**. Não precisa desinstalar; seus dados ficam no aparelho.
