@@ -572,3 +572,13 @@ button.chip.on { background: var(--accent); color: var(--accent-ink); }
 .ob-t.on { border-color: var(--accent); }
 .ob-sw { height: 44px; border-radius: 10px; display: block; }
 @media (max-width: 899px) { .ob-themes { grid-template-columns: repeat(2, 1fr); } }
+
+/* ===================================================================== cores da logo por tema */
+:root, [data-theme] { --logo-bg1: #4a3222; --logo-bg2: #1f1610; --logo-top: #f1dabf; --logo-low1: #c0703f; --logo-low2: #e6a87c; }
+[data-theme="vinho"]   { --logo-bg1: #6a1a2c; --logo-bg2: #22101a; --logo-top: #e2b46a; --logo-low1: #c0405e; --logo-low2: #f07a95; }
+[data-theme="oliva"]   { --logo-bg1: #3a4a26; --logo-bg2: #151b10; --logo-top: #d8e3a5; --logo-low1: #6f9a4a; --logo-low2: #b6dc8c; }
+[data-theme="noite"]   { --logo-bg1: #2c3570; --logo-bg2: #10132b; --logo-top: #b8c2ff; --logo-low1: #c77dab; --logo-low2: #f0a6ca; }
+[data-theme="creme"]   { --logo-bg1: #4a3222; --logo-bg2: #2a1b11; --logo-top: #f1dabf; --logo-low1: #c0703f; --logo-low2: #e6a87c; }
+[data-theme="morango"] { --logo-bg1: #ff9fb5; --logo-bg2: #f06a8a; --logo-top: #ffffff; --logo-low1: #ffd1dc; --logo-low2: #fff0f4; }
+[data-theme="nuvem"]   { --logo-bg1: #8fb8ff; --logo-bg2: #5b8def; --logo-top: #ffffff; --logo-low1: #cfe0ff; --logo-low2: #eef4ff; }
+[data-theme="jardim"]  { --logo-bg1: #8fd19e; --logo-bg2: #4f9f62; --logo-top: #ffffff; --logo-low1: #ffd1dc; --logo-low2: #fff0f4; }

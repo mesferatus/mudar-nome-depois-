@@ -56,6 +56,12 @@ function Shell() {
   const [view, setView] = useState(() => { let v = 'inicio'; try { v = localStorage.getItem('kairotec:view') ?? 'inicio' } catch { /* ignore */ } return LEGACY[v] ?? (NAV.some(n => n.id === v) ? v : 'inicio') })
   const [pal, setPal] = useState(false)
   useReminders(data)
+  const { toast } = useStore()
+  useEffect(() => {
+    const h = () => toast('Nova versão do Kairotec ✨', { label: 'Atualizar', run: () => location.reload() })
+    window.addEventListener('kairotec:update', h); return () => window.removeEventListener('kairotec:update', h)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
   const [compact, setCompact] = useState(() => { try { return localStorage.getItem('kairotec:compact') === '1' } catch { return false } })
   useEffect(() => { try { localStorage.setItem('kairotec:compact', compact ? '1' : '0') } catch { /* ignore */ } }, [compact])
   // luz que segue o cursor nos cartões

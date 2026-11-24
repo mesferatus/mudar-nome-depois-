@@ -3,6 +3,7 @@ import type { Data, Task, CalEvent, Note, Project, Settings } from './types'
 import { iso, addDays, parse } from './date'
 import { syncAll, loadHandles, type SyncState } from './sync'
 import { DOODLES } from './art'
+import { logoSvg } from '../components/Logo'
 
 const KEY = 'kairotec:data'
 export const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4)
@@ -102,6 +103,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(KEY, JSON.stringify(data))
     document.documentElement.dataset.theme = data.settings.theme
     document.documentElement.style.setProperty('--doodle', DOODLES[data.settings.theme] ?? 'none')
+    // favicon e cor da barra com as cores do tema
+    requestAnimationFrame(() => {
+      const cs = getComputedStyle(document.documentElement), v = (k: string) => cs.getPropertyValue(k).trim()
+      const svg = logoSvg({ bg1: v('--logo-bg1'), bg2: v('--logo-bg2'), top: v('--logo-top'), low1: v('--logo-low1'), low2: v('--logo-low2') })
+      const link = document.querySelector<HTMLLinkElement>('link[rel="icon"]'); if (link) link.href = 'data:image/svg+xml,' + encodeURIComponent(svg)
+      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', v('--bg'))
+    })
     if (first.current) { first.current = false; return }
     clearTimeout(timer.current)
     timer.current = window.setTimeout(() => {

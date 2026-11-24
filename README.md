@@ -37,6 +37,12 @@ Atalhos: `Ctrl+K` paleta de comandos · `Alt+1…7` trocar de aba · `N` nova ta
 - **Outlook:** Ajustes → Integrações → importar `.ics`
 - **Lembretes:** notificação 10 min antes dos eventos e resumo das entregas do dia
 
+## Atualizações automáticas (como na App Store)
+
+A cada mudança na branch `main`, o GitHub testa e publica o app no **GitHub Pages** (`.github/workflows/deploy.yml`). O app instalado verifica sozinho se há versão nova (ao abrir, ao voltar para ele e a cada 30 min) e mostra **"Nova versão ✨ · Atualizar"**. Não precisa desinstalar; seus dados ficam no aparelho.
+
+Para ligar (uma vez): no GitHub, **Settings → Pages → Source: GitHub Actions**.
+
 ## Instalar como app
 
 No Edge/Chrome do PC: ícone de instalar na barra de endereço. No celular: menu → *Adicionar à tela inicial*. Abre em janela própria e funciona sem internet.
