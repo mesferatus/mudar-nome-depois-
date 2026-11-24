@@ -1,0 +1,29 @@
+name: App de desktop (.exe)
+# A cada atualização na branch principal: gera o instalador Windows e publica nos Releases.
+# O app instalado encontra a versão nova sozinho e oferece "Reiniciar e atualizar".
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: desktop
+  cancel-in-progress: false
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      # versão sobe sozinha: 1.0.<número da execução>
+      - run: npm version 1.0.${{ github.run_number }} --no-git-tag-version
+      - run: npx vite build
+      - run: npx electron-builder --win --publish always -c.publish.owner=${{ github.repository_owner }} -c.publish.repo=${{ github.event.repository.name }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

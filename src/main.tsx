@@ -11,7 +11,7 @@ createRoot(document.getElementById('root')!).render(
 
 // Atualização automática: o app verifica se há versão nova ao abrir, ao voltar para a aba e a cada 30 min.
 // Quando a versão nova assume, avisa com um botão para recarregar (os dados ficam no aparelho e não se perdem).
-if ('serviceWorker' in navigator && import.meta.env.PROD) {
+if ('serviceWorker' in navigator && import.meta.env.PROD && !window.kairotecDesktop) {
   window.addEventListener('load', async () => {
     try {
       const reg = await navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`)

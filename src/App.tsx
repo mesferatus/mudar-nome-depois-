@@ -60,6 +60,7 @@ function Shell() {
   const { toast } = useStore()
   useEffect(() => {
     const h = () => toast('Nova versão do Kairotec ✨', { label: 'Atualizar', run: () => location.reload() })
+    window.kairotecDesktop?.onUpdateReady(v => toast(`Kairotec ${v} pronto ✨`, { label: 'Reiniciar e atualizar', run: () => window.kairotecDesktop!.restart() }))
     window.addEventListener('kairotec:update', h); return () => window.removeEventListener('kairotec:update', h)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -111,7 +112,7 @@ function Shell() {
       <div className="side-foot" title={sync.error}>
         <motion.span className="dot" animate={{ scale: sync.status === 'saving' ? [1, 1.5, 1] : 1 }} transition={{ repeat: sync.status === 'saving' ? Infinity : 0, duration: .8 }}
           style={{ background: sync.status === 'error' ? 'var(--bad)' : sync.cloudName || sync.excelName ? 'var(--ok)' : 'var(--faint)' }} />
-        {sync.status === 'error' ? 'Erro ao sincronizar' : sync.cloudName || sync.excelName ? (sync.lastSaved ? `Sincronizado ${sync.lastSaved}` : 'Conectado') : 'Só neste navegador'}
+        {sync.status === 'error' ? 'Erro ao sincronizar' : sync.cloudName || sync.excelName ? (sync.lastSaved ? `Sincronizado ${sync.lastSaved}` : 'Conectado') : window.kairotecDesktop ? 'Só neste computador' : 'Só neste navegador'}
       </div>
     </nav>
     <main className="main"><AnimatePresence mode="wait"><motion.div key={view} style={{ height: view === 'notas' ? '100%' : undefined }}><Cur /></motion.div></AnimatePresence></main>
