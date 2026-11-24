@@ -314,3 +314,19 @@ button.chip.on { background: var(--accent); color: var(--accent-ink); }
 }
 @media (max-width: 899px) { .head.home { display: none; } .dash-top { margin-top: 8px; } }
 @media (min-width: 900px) { .side .nav.more { display: flex; } }
+
+/* ===================================================================== acabamento */
+.empty { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 10px; padding: 18px 8px; color: var(--muted); font-size: 14px; height: 100%; }
+.empty .circ { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); }
+.done-t { flex: none; width: 22px; height: 22px; border-radius: 50%; border: 2px solid; display: grid; place-items: center; cursor: pointer; padding: 0; transition: background .2s; }
+.tcard { display: flex; gap: 10px; align-items: flex-start; transition: border-color .2s, transform .2s, box-shadow .2s; }
+.tcard > .body { flex: 1; min-width: 0; }
+.tcard:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(0,0,0,.25); }
+.card { transition: border-color .25s; }
+.card:hover { border-color: color-mix(in srgb, var(--accent) 22%, var(--line)); }
+.list-row { border-radius: 10px; transition: background .15s, padding .15s; }
+.list-row[style*="pointer"]:hover { background: var(--hover); padding-left: 8px; padding-right: 8px; }
+.btn { transition: background .2s, border-color .2s, transform .15s; }
+.btn:active { transform: scale(.97); }
+.action { transition: border-color .2s; } .action:hover { border-color: color-mix(in srgb, var(--accent) 35%, var(--line)); }
+.side .side-sec { margin-top: 6px; }

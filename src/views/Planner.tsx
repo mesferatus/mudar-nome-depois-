@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../lib/store'
@@ -7,7 +8,7 @@ import { MONTHS, WD, iso, monthGrid, today } from '../lib/date'
 import { buildWorkbook } from '../lib/excel'
 import { download } from '../lib/sync'
 
-export default function Planner() {
+export default function Planner({ switcher }: { switcher?: ReactNode }) {
   const { data, upsertTask, upsertEvent, toast } = useStore(); const { editTask, editEvent, quick } = useEditors()
   const [cur, setCur] = useState(() => { const d = new Date(); return { y: d.getFullYear(), m: d.getMonth() } })
   const [show, setShow] = useState<'tudo' | 'tarefas' | 'eventos'>('tudo')
@@ -28,8 +29,9 @@ export default function Planner() {
 
   return <Page wide>
     <div className="head">
-      <div><h1>{MONTHS[cur.m]} <span className="muted" style={{ fontWeight: 500 }}>{cur.y}</span></h1><p>Planner mensal — arraste itens entre os dias. Duplo clique cria evento.</p></div>
+      <div><h1>{MONTHS[cur.m]} <span className="muted" style={{ fontWeight: 500 }}>{cur.y}</span></h1><p>Arraste itens entre os dias · duplo clique cria evento</p></div>
       <div className="sp" />
+      {switcher}
       <Seg value={show} onChange={setShow} options={[{ v: 'tudo', l: 'Tudo' }, { v: 'tarefas', l: 'Entregas' }, { v: 'eventos', l: 'Eventos' }]} />
       <div className="row" style={{ gap: 4 }}>
         <Btn variant="icon" onClick={() => go(-1)}><Icon n="left" /></Btn>

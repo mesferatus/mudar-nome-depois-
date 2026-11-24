@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { useStore } from '../lib/store'
@@ -7,7 +8,7 @@ import { WD, MONTHS, addDays, iso, startOfWeek, toMin, pad, today } from '../lib
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i), PX = 48
 
-export default function Agenda() {
+export default function Agenda({ switcher }: { switcher?: ReactNode }) {
   const { data, upsertEvent } = useStore(); const { editEvent } = useEditors()
   const [anchor, setAnchor] = useState(new Date())
   const [now, setNow] = useState(new Date())
@@ -34,7 +35,8 @@ export default function Agenda() {
 
   return <Page wide>
     <div className="head">
-      <div><h1>Agenda</h1><p>{MONTHS[ws.getMonth()]} {ws.getFullYear()} · clique num horário para criar, arraste para mover</p></div><div className="sp" />
+      <div><h1>{MONTHS[ws.getMonth()]} <span className="muted" style={{ fontWeight: 500 }}>{ws.getFullYear()}</span></h1><p>Clique num horário para criar · arraste para mover</p></div><div className="sp" />
+      {switcher}
       <Btn variant="icon" onClick={() => setAnchor(addDays(anchor, -7))}><Icon n="left" /></Btn>
       <Btn onClick={() => setAnchor(new Date())}>Hoje</Btn>
       <Btn variant="icon" onClick={() => setAnchor(addDays(anchor, 7))}><Icon n="right" /></Btn>

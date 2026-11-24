@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { useStore } from '../lib/store'
 import { metrics } from '../lib/metrics'
-import { Card, Page, Icon } from '../components/ui'
+import { Card, Page, Icon, Empty } from '../components/ui'
 import { Donut, Bars, Burndown } from '../components/charts'
 import { useEditors } from '../components/editors'
 import { fmt, today, addDays, iso, daysBetween } from '../lib/date'
@@ -65,14 +65,14 @@ export default function Dashboard() {
       <Card title="Burndown · 14 dias" sub={`${burn.total}h em aberto`} delay={.18}><Burndown points={burn.pts} /></Card>
       <Card title="Hoje" sub={`${todayEvents.length} compromissos`} delay={.22}>
         <div className="scroll" style={{ height: '100%' }}>
-          {todayEvents.length === 0 && <div className="muted">Agenda livre. Bom momento para foco.</div>}
+          {todayEvents.length === 0 && <Empty icon="cal" text="Agenda livre hoje" action="Evento" onAction={() => quick({ kind: 'event' })} />}
           {todayEvents.map(e => <div key={e.id} className="list-row" style={{ cursor: 'pointer' }} onClick={() => editEvent(e)}>
             <span className="mono muted">{e.start}</span><span className="dot" style={{ background: proj(e.projectId)?.color ?? 'var(--accent)' }} />{e.title}</div>)}
         </div>
       </Card>
       <Card title="Atenção" sub="atrasadas e em risco" delay={.26}>
         <div className="scroll" style={{ height: '100%' }}>
-          {[...m.overdueList, ...m.atRisk].length === 0 && <div className="muted">Nada pegando fogo 🌿</div>}
+          {[...m.overdueList, ...m.atRisk].length === 0 && <Empty icon="check" text="Tudo dentro do prazo" />}
           {[...m.overdueList.map(x => ({ x, k: 'late' })), ...m.atRisk.map(x => ({ x, k: 'risk' }))].map(({ x, k }) =>
             <div key={x.id} className="list-row" style={{ cursor: 'pointer' }} onClick={() => editTask(x)}>
               <span className="chip" style={{ color: k === 'late' ? 'var(--bad)' : 'var(--warn)' }}>{k === 'late' ? `${daysBetween(x.due!, t)}d atraso` : 'risco'}</span>

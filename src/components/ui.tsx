@@ -51,3 +51,22 @@ export const Card = ({ title, sub, children, delay = 0, className = '', style }:
 
 export const Page = ({ children, wide }: { children: ReactNode; wide?: boolean }) =>
   <motion.div className="page" style={wide ? { maxWidth: 'none' } : undefined} initial={{ opacity: 0, y: 10, filter: 'blur(4px)' }} animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }} exit={{ opacity: 0, y: -6, filter: 'blur(4px)' }} transition={{ duration: .28, ease: [.2, .8, .2, 1] }}>{children}</motion.div>
+
+/** Estado vazio: ícone em círculo, frase curta e (opcional) uma ação. */
+export function Empty({ icon, text, action, onAction }: { icon: string; text: string; action?: string; onAction?: () => void }) {
+  return <motion.div className="empty" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .3 }}>
+    <motion.span className="circ" initial={{ scale: .6 }} animate={{ scale: 1 }} transition={spring}><Icon n={icon} s={20} /></motion.span>
+    <span>{text}</span>
+    {action && <motion.button whileTap={{ scale: .95 }} className="btn sm soft" onClick={onAction}><Icon n="plus" s={14} /> {action}</motion.button>}
+  </motion.div>
+}
+
+/** Bolinha de concluir com animação de "pop". */
+export function DoneToggle({ done, onToggle, color = 'var(--accent)' }: { done: boolean; onToggle: () => void; color?: string }) {
+  return <motion.button className={`done-t ${done ? 'on' : ''}`} aria-label={done ? 'Reabrir' : 'Concluir'} onClick={e => { e.stopPropagation(); onToggle() }}
+    whileTap={{ scale: .8 }} animate={done ? { scale: [1, 1.25, 1] } : { scale: 1 }} transition={{ duration: .3 }} style={{ borderColor: color, background: done ? color : 'transparent' }}>
+    <AnimatePresence>{done && <motion.svg key="c" width="12" height="12" viewBox="0 0 24 24" initial={{ pathLength: 0, opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+      <motion.path d="M5 12l5 5 9-10" fill="none" stroke="var(--accent-ink)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: .25 }} />
+    </motion.svg>}</AnimatePresence>
+  </motion.button>
+}
