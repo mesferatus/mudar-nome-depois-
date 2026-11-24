@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useRef, useState, type R
 import type { Data, Task, CalEvent, Note, Project, Settings } from './types'
 import { iso, addDays, parse } from './date'
 import { syncAll, loadHandles, type SyncState } from './sync'
+import { pullSync, pushSync, syncConnected } from './cloudsync'
 import { DOODLES } from './art'
 import { logoSvg } from '../components/Logo'
 
@@ -76,6 +77,8 @@ type Ctx = {
   upsertProject: (p: Partial<Project> & { id?: string }) => Project
   removeProject: (id: string) => void
   setSettings: (s: Partial<Settings>) => void
+  startTimer: (taskId: string, mode?: 'livre' | 'pomodoro') => void
+  stopTimer: () => number
   toast: (msg: string, action?: ToastAction) => void
   toasts: { id: string; msg: string; action?: ToastAction }[]
 }
@@ -94,6 +97,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [sync, setSyncS] = useState<SyncState>({ cloudName: undefined, excelName: undefined, status: 'idle' })
   const [toasts, setToasts] = useState<{ id: string; msg: string; action?: ToastAction }[]>([])
   const timer = useRef<number>()
+  const skipPush = useRef(false)
+  // busca a versão da nuvem ao abrir, ao voltar para o app e a cada 2 min
+  useEffect(() => {
+    const pull = () => { if (!syncConnected()) return; pullSync(ref.current).then(d => { if (d) { skipPush.current = d.updatedAt === ref.current.updatedAt; ref.current = d; setData(d); setSync({ cloudSync: 'ok' }) } }).catch(() => setSync({ cloudSync: 'erro' })) }
+    pull()
+    const v = () => { if (document.visibilityState === 'visible') pull() }
+    document.addEventListener('visibilitychange', v); window.addEventListener('focus', pull); const i = setInterval(pull, 120000)
+    return () => { document.removeEventListener('visibilitychange', v); window.removeEventListener('focus', pull); clearInterval(i) }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
   const first = useRef(true)
 
   const setSync = (s: Partial<SyncState>) => setSyncS(p => ({ ...p, ...s }))
@@ -116,7 +129,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     clearTimeout(timer.current)
     timer.current = window.setTimeout(() => {
       setSync({ status: 'saving' })
-      syncAll(data).then(r => setSync({ status: r.error ? 'error' : 'saved', lastSaved: new Date().toLocaleTimeString('pt-BR'), error: r.error }))
+      const cloud = skipPush.current ? Promise.resolve() : pushSync(data).then(() => setSync({ cloudSync: 'ok' })).catch(e => setSync({ cloudSync: 'erro', error: `Sincronização: ${(e as Error).message}` }))
+      skipPush.current = false
+      Promise.all([syncAll(data), cloud]).then(([r]) => setSync({ status: r.error ? 'error' : 'saved', lastSaved: new Date().toLocaleTimeString('pt-BR'), error: r.error }))
     }, 1200)
   }, [data])
 
@@ -125,6 +140,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const snap = useRef<Data | null>(null)
   const keep = () => { snap.current = ref.current }
   const undoable = (msg: string) => { toast(msg, { label: 'Desfazer', run: () => { if (snap.current) { const s = snap.current; snap.current = null; setData(s); ref.current = s } } }) }
+
+  const stopTimer = () => {
+    const t = ref.current.timer; if (!t) return 0
+    const end = new Date().toISOString(), mins = (new Date(end).getTime() - new Date(t.start).getTime()) / 60000
+    mut(d => ({ ...d, timer: undefined, tasks: mins < 1 ? d.tasks : d.tasks.map(x => x.id === t.taskId ? { ...x, timeLog: [...(x.timeLog ?? []), { start: t.start, end }] } : x) }))
+    return Math.round(mins)
+  }
 
   const api = useMemo<Omit<Ctx, 'data' | 'sync' | 'toasts'>>(() => ({
     setSync, toast,
@@ -172,6 +194,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       mut(d => ({ ...d, projects: upsert(d.projects, res) })); return res
     },
     removeProject: (id) => { keep(); undoable('Projeto removido'); mut(d => ({ ...d, projects: d.projects.filter(x => x.id !== id), tasks: d.tasks.map(t => t.projectId === id ? { ...t, projectId: undefined } : t) })) },
+    startTimer: (taskId, mode = 'pomodoro') => {
+      const cur = ref.current.timer
+      if (cur) stopTimer()
+      mut(d => ({ ...d, timer: { taskId, start: new Date().toISOString(), mode }, tasks: d.tasks.map(t => t.id === taskId && t.status === 'todo' ? { ...t, status: 'doing' } : t) }))
+    },
+    stopTimer,
     setSettings: (s) => mut(d => ({ ...d, settings: { ...d.settings, ...s } })),
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [])

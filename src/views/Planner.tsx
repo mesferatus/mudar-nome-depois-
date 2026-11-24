@@ -1,3 +1,4 @@
+import { eventsOn } from '../lib/recur'
 import type { ReactNode } from 'react'
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -30,7 +31,7 @@ export default function Planner({ switcher }: { switcher?: ReactNode }) {
   const mobile = useIsMobile()
   const [sel, setSel] = useState(t)
   if (mobile) {
-    const evs = data.events.filter(e => e.date === sel).sort((a, b) => a.start.localeCompare(b.start))
+    const evs = eventsOn(data.events, sel).sort((a, b) => a.start.localeCompare(b.start))
     const tks = data.tasks.filter(x => x.due === sel)
     return <Page>
       <div className="head"><div><h1>{MONTHS[cur.m]} <span className="muted" style={{ fontWeight: 500 }}>{cur.y}</span></h1></div>
@@ -39,7 +40,7 @@ export default function Planner({ switcher }: { switcher?: ReactNode }) {
         <div className="mcal-h">{order.map(i => <span key={i}>{WD[i][0]}</span>)}</div>
         <motion.div key={`${cur.y}-${cur.m}`} className="mcal-g" initial={{ opacity: 0, x: dir * 20 }} animate={{ opacity: 1, x: 0 }}>
           {grid.map(day => {
-            const ds = iso(day), n = data.events.filter(e => e.date === ds).length, k = data.tasks.filter(x => x.due === ds && x.status !== 'done').length
+            const ds = iso(day), n = eventsOn(data.events, ds).length, k = data.tasks.filter(x => x.due === ds && x.status !== 'done').length
             return <motion.button whileTap={{ scale: .9 }} key={ds} className={`mday ${day.getMonth() !== cur.m ? 'out' : ''} ${ds === t ? 'today' : ''} ${ds === sel ? 'sel' : ''}`} onClick={() => setSel(ds)}>
               <span>{day.getDate()}</span><i>{n > 0 && <b style={{ background: 'var(--c4)' }} />}{k > 0 && <b style={{ background: ds < t ? 'var(--bad)' : 'var(--accent)' }} />}</i>
             </motion.button>
@@ -75,7 +76,7 @@ export default function Planner({ switcher }: { switcher?: ReactNode }) {
           <thead><tr>{order.map(i => <th key={i}>{WD[i]}</th>)}</tr></thead>
           <tbody>{Array.from({ length: 6 }, (_, w) => <tr key={w}>{grid.slice(w * 7, w * 7 + 7).map(day => {
             const ds = iso(day), out = day.getMonth() !== cur.m, we = day.getDay() === 0 || day.getDay() === 6
-            const evs = show !== 'tarefas' ? data.events.filter(e => e.date === ds).sort((a, b) => a.start.localeCompare(b.start)) : []
+            const evs = show !== 'tarefas' ? eventsOn(data.events, ds).sort((a, b) => a.start.localeCompare(b.start)) : []
             const tks = show !== 'eventos' ? data.tasks.filter(x => x.due === ds) : []
             const items = evs.length + tks.length
             return <td key={ds} className={`${out ? 'out' : ''} ${we ? 'we' : ''} ${drop === ds ? 'drop' : ''}`}

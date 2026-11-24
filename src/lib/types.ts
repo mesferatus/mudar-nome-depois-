@@ -9,15 +9,18 @@ export interface Task {
   createdAt: string
   repeat?: Repeat
   checklist?: { id: string; text: string; done: boolean }[]
+  timeLog?: { start: string; end: string }[]
 }
 export interface CalEvent {
   id: string; title: string; date: string; start: string; end: string
   projectId?: string; location?: string; color?: string
+  repeat?: Repeat; until?: string
 }
 export interface Note {
   id: string; title: string; body: string; folder: string; tags: string[]; updatedAt: string; pinned?: boolean
   parentId?: string; icon?: string; cover?: string; expanded?: boolean
   trashed?: boolean; wide?: boolean
+  comments?: { id: string; text: string; at: string; done?: boolean }[]
   db?: DbSchema
   props?: Record<string, string | number | boolean | undefined>
 }
@@ -32,6 +35,7 @@ export interface Data {
   projects: Project[]; tasks: Task[]; events: CalEvent[]; notes: Note[]
   settings: Settings
   updatedAt: string
+  timer?: { taskId: string; start: string; mode: 'livre' | 'pomodoro' }
 }
 
 export const STATUS_LABEL: Record<Status, string> = { todo: 'A fazer', doing: 'Em andamento', review: 'Revisão', done: 'Concluído' }

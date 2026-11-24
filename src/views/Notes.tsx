@@ -12,6 +12,21 @@ import { takeNote } from '../lib/nav'
 
 const tagsOf = (body: string) => [...new Set([...body.matchAll(/(?:^|\s)#([\p{L}\w-]+)/gu)].map(m => m[1]))]
 
+function Comments({ note, save }: { note: Note; save: (p: Partial<Note>) => void }) {
+  const [txt, setTxt] = useState('')
+  const list = note.comments ?? []
+  const add = () => { if (!txt.trim()) return; save({ comments: [...list, { id: Date.now().toString(36), text: txt.trim(), at: new Date().toISOString() }] }); setTxt('') }
+  return <div className="comments">
+    <div className="side-sec" style={{ padding: '0 0 8px' }}>Comentários {list.length ? `· ${list.filter(c => !c.done).length} abertos` : ''}</div>
+    <AnimatePresence initial={false}>{list.map(c => <motion.div key={c.id} layout className={`cmt ${c.done ? 'done' : ''}`} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, height: 0 }}>
+      <span className="cmt-a">💬</span><div style={{ flex: 1 }}><div>{c.text}</div><small className="muted">{new Date(c.at).toLocaleString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</small></div>
+      <button title={c.done ? 'Reabrir' : 'Resolver'} onClick={() => save({ comments: list.map(x => x.id === c.id ? { ...x, done: !x.done } : x) })}>{c.done ? '↺' : '✓'}</button>
+      <button title="Excluir" onClick={() => save({ comments: list.filter(x => x.id !== c.id) })}>✕</button>
+    </motion.div>)}</AnimatePresence>
+    <div className="row"><input className="input" placeholder="Adicionar um comentário ou lembrete… (Enter)" value={txt} onChange={e => setTxt(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} /></div>
+  </div>
+}
+
 export default function Notes() {
   const { data, upsertNote, removeNote, restoreNote, purgeNote, toast } = useStore()
   const [sel, setSel] = useState<string | undefined>(() => takeNote() ?? data.notes.find(n => n.pinned)?.id ?? data.notes.find(n => !n.parentId)?.id)
@@ -134,7 +149,11 @@ export default function Notes() {
         {parentDb && <div className="props">{parentDb.db!.props.map(p => <div key={p.id} className="prop-r"><span className="prop-n">{p.name}</span>
           <PropValue prop={p} value={note.props?.[p.id]} onChange={v => save({ props: { ...note.props, [p.id]: v } })} onAddOption={name => upsertNote({ id: parentDb.id, db: { ...parentDb.db!, props: parentDb.db!.props.map(x => x.id === p.id ? { ...x, options: [...(x.options ?? []), { name, color: '#c9a7ff' }] } : x) } })} /></div>)}</div>}
         {note.db ? <Database db={note} open={open} /> :
-          <BlockEditor key={note.id} value={note.body} onChange={body => save({ body })} onLink={link} onCreate={kind => {
+          <BlockEditor key={note.id} value={note.body} onChange={body => save({ body })} onLink={link}
+            renderDb={id => { const db = data.notes.find(n => n.id === id && n.db && !n.trashed); return db ? <div>
+              <button className="bdb-t" onClick={() => open(db.id)}>{db.icon} {db.title || 'Banco de dados'} <span className="muted">↗</span></button><Database db={db} open={open} /></div> : null }}
+            onCreate={kind => {
+            if (kind === 'dbview') { const n = upsertNote({ title: 'Banco de dados', icon: '🗂️', parentId: note.id, folder: 'Geral', body: '', db: newDb() }); return n.id }
             const title = kind === 'database' ? 'Banco de dados' : 'Nova página'
             const n = upsertNote({ title, icon: kind === 'database' ? '🗂️' : '📄', parentId: note.id, folder: 'Geral', body: '', ...(kind === 'database' ? { db: newDb() } : {}) })
             upsertNote({ id: note.id, expanded: true }); setTimeout(() => open(n.id), 50); return title
@@ -144,6 +163,7 @@ export default function Notes() {
           {kids(note.id).map(k => <motion.button key={k.id} className="subpage" whileHover={{ x: 3 }} onClick={() => open(k.id)}><span>{k.icon ?? '📄'}</span>{k.title}</motion.button>)}
           <button className="subpage ghost" onClick={() => create({ parentId: note.id })}><span>＋</span>Subpágina</button>
         </div>}
+        <Comments note={note} save={save} />
         {backlinks.length > 0 && <div className="backlinks"><div className="side-sec" style={{ padding: '0 0 8px' }}>Mencionada em</div>
           {backlinks.map(b => <button key={b.id} className="subpage" onClick={() => open(b.id)}><span>{b.icon ?? '📄'}</span>{b.title}</button>)}</div>}
       </motion.div>}</AnimatePresence>

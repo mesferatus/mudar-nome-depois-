@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { blocksToMd, bid, mdToBlocks, shortcut, SLASH, type Block, type BType } from '../lib/blocks'
 
@@ -7,6 +7,8 @@ export const inline = (s: string) => esc(s)
   .replace(/`([^`]+)`/g, '<code>$1</code>')
   .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>').replace(/(^|[^*])\*([^*]+)\*/g, '$1<i>$2</i>')
   .replace(/~~([^~]+)~~/g, '<s>$1</s>')
+  .replace(/==([^=]+)==/g, '<mark>$1</mark>')
+  .replace(/\{(vermelho|laranja|verde|azul|roxo|rosa):([^}]+)\}/g, '<span class="tc-$1">$2</span>')
   .replace(/\[\[([^\]]+)\]\]/g, '<span class="wl" data-link="$1">$1</span>')
   .replace(/(^|\s)#([\p{L}\w-]+)/gu, '$1<span class="tag">#$2</span>')
   .replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noreferrer">$1</a>')
@@ -22,7 +24,7 @@ function grow(el: HTMLTextAreaElement | null) { if (el) { el.style.height = '0px
  *  "/" abre o menu de blocos · atalhos "# ", "- ", "[] ", "> ", "---"
  *  Enter cria bloco · Backspace no início junta/converte · arraste ⋮⋮ para reordenar
  */
-export function BlockEditor({ value, onChange, onLink, onCreate }: { value: string; onChange: (md: string) => void; onLink: (title: string) => void; onCreate?: (kind: 'page' | 'database') => string }) {
+export function BlockEditor({ value, onChange, onLink, onCreate, renderDb }: { value: string; onChange: (md: string) => void; onLink: (title: string) => void; onCreate?: (kind: 'page' | 'database' | 'dbview') => string; renderDb?: (id: string) => ReactNode }) {
   const [blocks, setBlocks] = useState<Block[]>(() => mdToBlocks(value))
   const [editing, setEditing] = useState<string | null>(null)
   const [focus, setFocus] = useState<{ id: string; pos: number } | null>(null)
@@ -50,6 +52,7 @@ export function BlockEditor({ value, onChange, onLink, onCreate }: { value: stri
   }
   const setType = (id: string, type: BType) => {
     const b = blocks[at(id)]
+    if (type === 'dbview' && onCreate) { const dbId = onCreate('dbview'); commit(blocks.map(x => x.id === id ? { ...x, type: 'dbview', text: dbId } : x)); setEditing(null); return }
     if ((type === 'page' || type === 'database') && onCreate) { const title = onCreate(type); commit(blocks.map(x => x.id === id ? { ...x, type: 'p', text: `[[${title}]]` } : x)); setEditing(null); return }
     const extra: Partial<Block> = type === 'callout' ? { icon: b.icon ?? '💡' } : type === 'toggle' ? { open: true, body: b.body ?? '' } : {}
     if (type === 'divider') { commit(blocks.map(x => x.id === id ? { ...x, type, text: '' } : x)); addAfter(id); return }
@@ -121,9 +124,11 @@ export function BlockEditor({ value, onChange, onLink, onCreate }: { value: stri
         <div className="bbody">
           <AnimatePresence>{selx?.id === b.id && editing === b.id && <motion.div className="fmt" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} onMouseDown={e => e.preventDefault()}>
             <button onClick={() => wrap(b, '**')}><b>B</b></button><button onClick={() => wrap(b, '*')}><i>I</i></button><button onClick={() => wrap(b, '~~')}><s>S</s></button>
-            <button onClick={() => wrap(b, '`')} className="mono">{'</>'}</button><button onClick={() => wrap(b, '[[', ']]')}>🔗 Página</button>
+            <button onClick={() => wrap(b, '`')} className="mono">{'</>'}</button><button onClick={() => wrap(b, '==')} title="Marca-texto">🖍</button>
+            {['vermelho', 'laranja', 'verde', 'azul', 'roxo', 'rosa'].map(c => <button key={c} title={c} onClick={() => wrap(b, `{${c}:`, '}')}><span className={`cdot tc-${c}`}>●</span></button>)}<button onClick={() => wrap(b, '[[', ']]')}>🔗 Página</button>
           </motion.div>}</AnimatePresence>
-          {b.type === 'image' ? (b.text ? <figure className="bimg"><img src={b.text} alt={b.body ?? ''} /><button className="bimg-x" onClick={() => patch(b.id, { text: '' })}>Trocar</button></figure> :
+          {b.type === 'dbview' ? <div className="bdb">{renderDb?.(b.text) ?? <span className="muted">Banco de dados não encontrado</span>}</div> :
+          b.type === 'image' ? (b.text ? <figure className="bimg"><img src={b.text} alt={b.body ?? ''} /><button className="bimg-x" onClick={() => patch(b.id, { text: '' })}>Trocar</button></figure> :
             <div className="bimg-up"><span>🖼</span><label className="btn sm">Enviar imagem<input type="file" accept="image/*" hidden onChange={e => {
               const f = e.target.files?.[0]; if (!f) return
               if (f.size > 2_500_000) { alert('Imagem grande demais (máx. 2,5 MB) — ela fica salva dentro da nota.'); return }

@@ -12,7 +12,7 @@ const CC: Record<Status, string> = { todo: 'var(--faint)', doing: 'var(--info)',
 const PR = { alta: 'var(--bad)', media: 'var(--warn)', baixa: 'var(--muted)' }
 
 export default function Board() {
-  const { data, upsertTask, toast } = useStore(); const { editTask, quick } = useEditors()
+  const { data, upsertTask, toast, startTimer } = useStore(); const { editTask, quick } = useEditors()
   const [over, setOver] = useState<Status>()
   const [pf, setPf] = useState<string>('all')
   const [view, setView] = useState<'quadro' | 'lista'>('quadro')
@@ -57,6 +57,7 @@ export default function Board() {
               {x.checklist?.length ? <span className="chip">☑ {x.checklist.filter(c => c.done).length}/{x.checklist.length}</span> : null}
               <span title={`Prioridade ${x.priority}`} style={{ color: PR[x.priority], fontWeight: 800 }}>{'▮'.repeat(x.priority === 'alta' ? 3 : x.priority === 'media' ? 2 : 1)}</span>
               {x.estimate ? <span className="mono" style={{ marginLeft: 'auto' }}>{x.estimate}h</span> : null}
+              {s !== 'done' && <button className="play" title="Iniciar foco (pomodoro 25 min)" onClick={e => { e.stopPropagation(); startTimer(x.id); toast('Foco iniciado 🍅') }}>▶</button>}
             </div>
           </div></div></motion.div>)}</AnimatePresence></div>
       </div>

@@ -1,3 +1,4 @@
+import { eventsOn } from './recur'
 import type { Data } from './types'
 import { addDays, iso, today, startOfWeek, parse, daysBetween } from './date'
 
@@ -38,7 +39,7 @@ export function metrics(d: Data) {
   // Week load (hours of events per weekday)
   const wk = Array.from({ length: 7 }, (_, i) => {
     const ds = iso(addDays(ws0, i))
-    const mins = d.events.filter(e => e.date === ds).reduce((s, e) => { const [h1, m1] = e.start.split(':').map(Number), [h2, m2] = e.end.split(':').map(Number); return s + (h2 * 60 + m2 - h1 * 60 - m1) }, 0)
+    const mins = eventsOn(d.events, ds).reduce((s, e) => { const [h1, m1] = e.start.split(':').map(Number), [h2, m2] = e.end.split(':').map(Number); return s + (h2 * 60 + m2 - h1 * 60 - m1) }, 0)
     return { day: parse(ds), hours: Math.round(mins / 6) / 10, due: d.tasks.filter(x => x.due === ds && x.status !== 'done').length }
   })
   return { open: open.length, done: done.length, overdue: overdue.length, overdueList: overdue, dueSoon: dueSoon.length, dueSoonList: dueSoon, onTimeRate, openHours, atRisk, byProject, byStatus, weeks, wk }
