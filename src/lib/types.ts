@@ -17,7 +17,14 @@ export interface CalEvent {
 export interface Note {
   id: string; title: string; body: string; folder: string; tags: string[]; updatedAt: string; pinned?: boolean
   parentId?: string; icon?: string; cover?: string; expanded?: boolean
+  trashed?: boolean; wide?: boolean
+  db?: DbSchema
+  props?: Record<string, string | number | boolean | undefined>
 }
+export type PropType = 'text' | 'number' | 'select' | 'date' | 'checkbox'
+export interface Prop { id: string; name: string; type: PropType; options?: { name: string; color: string }[] }
+export type DbView = 'table' | 'board' | 'gallery' | 'list'
+export interface DbSchema { props: Prop[]; view: DbView; sort?: { prop: string; dir: 1 | -1 } }
 export interface Settings { theme: string; userName: string; weekStart: 0 | 1; autoExcel: boolean; autoCloud: boolean; onboarded?: boolean; reminders?: boolean }
 
 export interface Data {

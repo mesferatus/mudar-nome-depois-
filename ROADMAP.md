@@ -30,7 +30,9 @@
 - [x] Tarefas recorrentes e subtarefas (checklist)
 - [x] Caderno estilo Notion (páginas, capas, blocos, modelos)
 - [x] Temas fofos com desenhos
-- [ ] Bancos de dados nas páginas (tabelas estilo Notion)
+- [x] Bancos de dados (tabela, quadro, galeria, lista)
+- [x] Lixeira, imagens, barra de formatação, mover/duplicar/exportar páginas
+- [ ] Colunas lado a lado e bancos de dados dentro de uma página (inline)
 - [ ] Mais temas e editor de tema próprio
 
 ## 4. Qualidade (já automatizado)

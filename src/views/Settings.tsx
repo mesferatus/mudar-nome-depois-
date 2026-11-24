@@ -14,6 +14,10 @@ export const THEMES = [
   { id: 'morango', name: 'Morango 🍓', c: ['#fff5f7', '#ff9fb5', '#f06a8a'] },
   { id: 'nuvem', name: 'Nuvem ☁️', c: ['#f2f8ff', '#8fb8ff', '#5b8def'] },
   { id: 'jardim', name: 'Jardim 🌸', c: ['#f4fbf3', '#8fd19e', '#4f9f62'] },
+  { id: 'lavanda', name: 'Lavanda 💜', c: ['#f8f4ff', '#c9a7ff', '#9b6ee6'] },
+  { id: 'bruxinha', name: 'Bruxinha 🔮', c: ['#120c1c', '#5b3a8f', '#b8f28a'] },
+  { id: 'gotico', name: 'Gótico 🦇', c: ['#0a0809', '#5a1424', '#d4374f'] },
+  { id: 'abobora', name: 'Abóbora 🎃', c: ['#140e1a', '#6b3f8f', '#ff9b42'] },
 ]
 
 export default function Settings() {

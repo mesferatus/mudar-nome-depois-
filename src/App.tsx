@@ -35,7 +35,7 @@ function Palette({ open, close, go }: { open: boolean; close: () => void; go: (v
       ...THEMES.map(t => ({ l: `Tema: ${t.name}`, h: 'tema', run: () => setSettings({ theme: t.id }) })),
       ...data.tasks.map(t => ({ l: t.title, h: 'tarefa', run: () => editTask(t) })),
       ...data.events.map(e => ({ l: e.title, h: `evento ${e.date.slice(5).split('-').reverse().join('/')}`, run: () => editEvent(e) })),
-      ...data.notes.map(n => ({ l: n.title, h: 'nota', run: () => go('notas') })),
+      ...data.notes.filter(n => !n.trashed).map(n => ({ l: `${n.icon ?? '📄'} ${n.title}`, h: 'página', run: () => go('notas') })),
     ]
     const s = q.toLowerCase()
     return base.filter(o => o.l.toLowerCase().includes(s)).slice(0, 9)

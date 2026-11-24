@@ -130,9 +130,9 @@ export async function buildWorkbook(d: Data): Promise<Blob> {
   // ---------- Notas ----------
   const ns = wb.addWorksheet('Notas', { properties: { tabColor: { argb: 'FF9B7FD1' } } }); bg(ns)
   ns.columns = [{ width: 30 }, { width: 16 }, { width: 20 }, { width: 90 }, { width: 18 }]
-  title(ns, 'Notas', `${d.notes.length} páginas`, 5)
+  title(ns, 'Notas', `${d.notes.filter(n => !n.trashed).length} páginas`, 5)
   const nh = ns.getRow(4); nh.values = ['Título', 'Pasta', 'Tags', 'Conteúdo', 'Atualizada']; header(nh)
-  d.notes.forEach((n, i) => {
+  d.notes.filter(n => !n.trashed).forEach((n, i) => {
     const row = ns.getRow(5 + i); row.values = [n.title, n.folder, n.tags.join(', '), n.body, new Date(n.updatedAt)]
     row.getCell(5).numFmt = 'dd/mm/yy hh:mm'
     row.eachCell({ includeEmpty: true }, c => { c.font = { name: FONT, size: 10 }; c.alignment = { wrapText: true, vertical: 'top' }; c.border = border() })

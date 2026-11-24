@@ -2,7 +2,7 @@
  * Conversão entre blocos (editor estilo Notion) e Markdown (como a nota é guardada).
  * Guardar em Markdown mantém backup, Excel e backlinks funcionando.
  */
-export type BType = 'p' | 'h1' | 'h2' | 'h3' | 'bullet' | 'number' | 'todo' | 'quote' | 'callout' | 'divider' | 'code' | 'toggle'
+export type BType = 'p' | 'h1' | 'h2' | 'h3' | 'bullet' | 'number' | 'todo' | 'quote' | 'callout' | 'divider' | 'code' | 'toggle' | 'image' | 'page' | 'database'
 export interface Block { id: string; type: BType; text: string; checked?: boolean; icon?: string; open?: boolean; body?: string }
 
 let n = 0
@@ -55,6 +55,7 @@ export function blocksToMd(bs: Block[]): string {
       case 'quote': return `> ${b.text}`
       case 'callout': return `> ${b.icon ?? '💡'} ${b.text}`
       case 'divider': return '---'
+      case 'image': return `![${b.body ?? ''}](${b.text})`
       case 'code': return '```\n' + b.text + '\n```'
       case 'toggle': return `<details${b.open ? ' open' : ''}><summary>${b.text}</summary>\n${b.body ?? ''}\n</details>`
       default: return b.text
@@ -74,6 +75,9 @@ export const SLASH: { type: BType; label: string; hint: string; icon: string; ke
   { type: 'callout', label: 'Destaque', hint: 'Caixa com ícone', icon: '💡', keys: 'callout destaque aviso nota' },
   { type: 'quote', label: 'Citação', hint: 'Trecho em destaque', icon: '❝', keys: 'citacao quote' },
   { type: 'code', label: 'Código', hint: 'DAX, SQL, Python…', icon: '</>', keys: 'codigo code dax sql python' },
+  { type: 'page', label: 'Página', hint: 'Subpágina dentro desta', icon: '📄', keys: 'pagina page subpagina' },
+  { type: 'database', label: 'Banco de dados', hint: 'Tabela, quadro, galeria…', icon: '▦', keys: 'banco database tabela table quadro galeria' },
+  { type: 'image', label: 'Imagem', hint: 'Enviar arquivo ou colar link', icon: '🖼', keys: 'imagem image foto print' },
   { type: 'divider', label: 'Divisor', hint: 'Linha separadora', icon: '—', keys: 'divisor linha separador' },
 ]
 

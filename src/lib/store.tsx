@@ -71,6 +71,8 @@ type Ctx = {
   removeEvent: (id: string) => void
   upsertNote: (n: Partial<Note> & { id?: string }) => Note
   removeNote: (id: string) => void
+  restoreNote: (id: string) => void
+  purgeNote: (id: string) => void
   upsertProject: (p: Partial<Project> & { id?: string }) => Project
   removeProject: (id: string) => void
   setSettings: (s: Partial<Settings>) => void
@@ -154,9 +156,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     },
     removeNote: (id) => {
       const n = ref.current.notes.find(x => x.id === id)
-      keep(); mut(d => ({ ...d, notes: d.notes.filter(x => x.id !== id).map(x => x.parentId === id ? { ...x, parentId: n?.parentId } : x) }))
-      undoable(`"${n?.title ?? 'Página'}" excluída`)
+      const all = new Set([id]); let grew = true
+      while (grew) { grew = false; for (const x of ref.current.notes) if (x.parentId && all.has(x.parentId) && !all.has(x.id)) { all.add(x.id); grew = true } }
+      keep(); mut(d => ({ ...d, notes: d.notes.map(x => all.has(x.id) ? { ...x, trashed: true } : x) }))
+      undoable(`"${n?.title || 'Página'}" foi para a lixeira`)
     },
+    restoreNote: (id) => {
+      const n = ref.current.notes.find(x => x.id === id)
+      const parentGone = n?.parentId && ref.current.notes.find(x => x.id === n.parentId)?.trashed
+      mut(d => ({ ...d, notes: d.notes.map(x => x.id === id || (x.parentId === id && x.trashed) ? { ...x, trashed: false, ...(x.id === id && parentGone ? { parentId: undefined } : {}) } : x) }))
+    },
+    purgeNote: (id) => { keep(); mut(d => ({ ...d, notes: d.notes.filter(x => x.id !== id && x.parentId !== id) })); undoable('Excluída para sempre') },
     upsertProject: (p) => {
       const res = { name: 'Projeto', color: '#8a8f98', ...ref.current.projects.find(x => x.id === p.id), ...p, id: p.id ?? uid() } as Project
       mut(d => ({ ...d, projects: upsert(d.projects, res) })); return res

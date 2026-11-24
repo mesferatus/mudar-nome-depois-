@@ -21,9 +21,9 @@ Use **Microsoft Edge** ou **Google Chrome** (necessário para gravar direto em a
 | **Calendário** | Visão Mês (estilo planilha) ou Semana (horários, estilo Outlook). Mês: calendário mensal com cara de planilha. Arraste entregas/eventos entre dias, duplo clique cria evento, exporta `.xlsx` |
 | **Agenda** | Semana por horário (estilo Outlook), linha do "agora", clique para criar, arraste para mover |
 | **Entregas** | Quadro (A fazer → Em andamento → Revisão → Concluído) e visão em lista, filtros por projeto |
-| **Notas** | Caderno estilo Notion: páginas dentro de páginas, ícones, capas fofas, editor em blocos (digite **/**), atalhos de Markdown, alternâncias, destaques, código, arrastar blocos, modelos (ata, projeto, diário, BI, estudos), favoritos e backlinks |
+| **Notas** | Caderno estilo Notion: páginas aninhadas, ícones e capas fofas, editor em blocos (**/**) com títulos, listas, tarefas, alternâncias, destaques, código, imagens e links entre páginas; barra de formatação; **bancos de dados** com visões Tabela, Quadro, Galeria e Lista (propriedades de texto, número, seleção, data e caixa); modelos; favoritos; lixeira; duplicar, mover e exportar .md |
 | **Rotinas** | Assistentes locais: *Vigia de prazos*, *Planejador de foco* (cria blocos na agenda), *Relatório semanal* (status report pronto pro gestor), *Faxina* |
-| **Ajustes** | 8 temas (Café, Vinho, Oliva, Noite, Creme e os fofos Morango 🍓, Nuvem ☁️, Jardim 🌸 com desenhos), projetos, nuvem, Excel, backup |
+| **Ajustes** | 12 temas (Café, Vinho, Oliva, Noite, Creme, Morango 🍓, Nuvem ☁️, Jardim 🌸, Lavanda 💜, Bruxinha 🔮, Gótico 🦇, Abóbora 🎃 — com desenhos), projetos, nuvem, Excel, backup |
 
 **Criação rápida:** botão **+ Novo** (ou tecla `N`). Escreva natural: *"Reunião com fornecedor amanhã 14h #bi"*, *"Entregar dashboard sexta !alta ~4h"*, *"nota: ideias de estoque"* — o app entende data, horário, `#projeto`, `!prioridade` e `~horas`.
 

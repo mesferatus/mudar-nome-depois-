@@ -22,13 +22,14 @@ function grow(el: HTMLTextAreaElement | null) { if (el) { el.style.height = '0px
  *  "/" abre o menu de blocos · atalhos "# ", "- ", "[] ", "> ", "---"
  *  Enter cria bloco · Backspace no início junta/converte · arraste ⋮⋮ para reordenar
  */
-export function BlockEditor({ value, onChange, onLink }: { value: string; onChange: (md: string) => void; onLink: (title: string) => void }) {
+export function BlockEditor({ value, onChange, onLink, onCreate }: { value: string; onChange: (md: string) => void; onLink: (title: string) => void; onCreate?: (kind: 'page' | 'database') => string }) {
   const [blocks, setBlocks] = useState<Block[]>(() => mdToBlocks(value))
   const [editing, setEditing] = useState<string | null>(null)
   const [focus, setFocus] = useState<{ id: string; pos: number } | null>(null)
   const [slash, setSlash] = useState<{ id: string; i: number } | null>(null)
   const [drag, setDrag] = useState<{ from?: string; over?: string }>({})
   const [iconFor, setIconFor] = useState<string | null>(null)
+  const [selx, setSelx] = useState<{ id: string; a: number; b: number } | null>(null)
   const root = useRef<HTMLDivElement>(null)
 
   const commit = (bs: Block[]) => { setBlocks(bs); onChange(blocksToMd(bs)) }
@@ -49,6 +50,7 @@ export function BlockEditor({ value, onChange, onLink }: { value: string; onChan
   }
   const setType = (id: string, type: BType) => {
     const b = blocks[at(id)]
+    if ((type === 'page' || type === 'database') && onCreate) { const title = onCreate(type); commit(blocks.map(x => x.id === id ? { ...x, type: 'p', text: `[[${title}]]` } : x)); setEditing(null); return }
     const extra: Partial<Block> = type === 'callout' ? { icon: b.icon ?? '💡' } : type === 'toggle' ? { open: true, body: b.body ?? '' } : {}
     if (type === 'divider') { commit(blocks.map(x => x.id === id ? { ...x, type, text: '' } : x)); addAfter(id); return }
     commit(blocks.map(x => x.id === id ? { ...x, type, text: x.text.startsWith('/') ? '' : x.text, ...extra } : x)); go(id, 0)
@@ -82,6 +84,11 @@ export function BlockEditor({ value, onChange, onLink }: { value: string; onChan
     else if (e.key === 'Escape') { setEditing(null); el.blur() }
   }
 
+  const wrap = (b: Block, l: string, r = l) => {
+    if (!selx || selx.id !== b.id) return
+    const t = b.text, mid = t.slice(selx.a, selx.b)
+    patch(b.id, { text: t.slice(0, selx.a) + l + mid + r + t.slice(selx.b) }); setFocus({ id: b.id, pos: selx.b + l.length + r.length }); setSelx(null)
+  }
   const onText = (b: Block, text: string, el: HTMLTextAreaElement) => {
     grow(el)
     const sc = b.type === 'p' ? shortcut(text) : null
@@ -93,7 +100,8 @@ export function BlockEditor({ value, onChange, onLink }: { value: string; onChan
   const field = (b: Block, cls = '') => {
     const ed = editing === b.id
     if (ed || b.type === 'code') return <textarea data-id={b.id} rows={1} className={`bfield ${cls}`} value={b.text} placeholder={ed ? (PH[b.type] ?? "Digite '/' para comandos") : ''}
-      ref={grow} onChange={e => onText(b, e.target.value, e.target)} onKeyDown={e => onKey(e, b)} onFocus={() => setEditing(b.id)} onBlur={() => setTimeout(() => setEditing(c => c === b.id ? null : c), 120)} spellCheck />
+      ref={grow} onChange={e => onText(b, e.target.value, e.target)} onKeyDown={e => onKey(e, b)}
+      onSelect={e => { const el = e.currentTarget; setSelx(el.selectionEnd > el.selectionStart ? { id: b.id, a: el.selectionStart, b: el.selectionEnd } : null) }} onFocus={() => setEditing(b.id)} onBlur={() => setTimeout(() => setEditing(c => c === b.id ? null : c), 120)} spellCheck />
     return <div className={`bfield view ${cls} ${b.text ? '' : 'empty'}`} data-ph={PH[b.type] ?? ''}
       onMouseDown={e => { const t = e.target as HTMLElement; if (t.dataset.link) { e.preventDefault(); onLink(t.dataset.link); return } if (t.tagName === 'A') return; e.preventDefault(); go(b.id, b.text.length) }}
       dangerouslySetInnerHTML={{ __html: b.text ? inline(b.text) : '&nbsp;' }} />
@@ -111,7 +119,17 @@ export function BlockEditor({ value, onChange, onLink }: { value: string; onChan
           <span className="gbtn grip" draggable onDragStart={() => setDrag({ from: b.id })} onDragEnd={() => setDrag({})} title="Arraste para mover">⋮⋮</span>
         </div>
         <div className="bbody">
-          {b.type === 'divider' ? <hr onClick={() => go(b.id, 0)} /> :
+          <AnimatePresence>{selx?.id === b.id && editing === b.id && <motion.div className="fmt" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} onMouseDown={e => e.preventDefault()}>
+            <button onClick={() => wrap(b, '**')}><b>B</b></button><button onClick={() => wrap(b, '*')}><i>I</i></button><button onClick={() => wrap(b, '~~')}><s>S</s></button>
+            <button onClick={() => wrap(b, '`')} className="mono">{'</>'}</button><button onClick={() => wrap(b, '[[', ']]')}>🔗 Página</button>
+          </motion.div>}</AnimatePresence>
+          {b.type === 'image' ? (b.text ? <figure className="bimg"><img src={b.text} alt={b.body ?? ''} /><button className="bimg-x" onClick={() => patch(b.id, { text: '' })}>Trocar</button></figure> :
+            <div className="bimg-up"><span>🖼</span><label className="btn sm">Enviar imagem<input type="file" accept="image/*" hidden onChange={e => {
+              const f = e.target.files?.[0]; if (!f) return
+              if (f.size > 2_500_000) { alert('Imagem grande demais (máx. 2,5 MB) — ela fica salva dentro da nota.'); return }
+              const r = new FileReader(); r.onload = () => patch(b.id, { text: String(r.result) }); r.readAsDataURL(f)
+            }} /></label><input className="input" style={{ height: 34 }} placeholder="ou cole o link da imagem e Enter" onKeyDown={e => { const v = e.currentTarget.value.trim(); if (e.key === 'Enter' && v) patch(b.id, { text: v }) }} /></div>) :
+          b.type === 'divider' ? <hr onClick={() => go(b.id, 0)} /> :
             b.type === 'todo' ? <div className="row-b"><input type="checkbox" checked={!!b.checked} onChange={e => patch(b.id, { checked: e.target.checked })} />{field(b, b.checked ? 'done' : '')}</div> :
               b.type === 'bullet' ? <div className="row-b"><span className="mark">•</span>{field(b)}</div> :
                 b.type === 'number' ? <div className="row-b"><span className="mark num">{num}.</span>{field(b)}</div> :
