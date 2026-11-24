@@ -1,5 +1,5 @@
-import { AnimatePresence, motion, type HTMLMotionProps } from 'framer-motion'
-import { useId, type ReactNode } from 'react'
+import { AnimatePresence, animate, motion, type HTMLMotionProps } from 'framer-motion'
+import { useEffect, useId, useState, type ReactNode } from 'react'
 
 export const spring = { type: 'spring', stiffness: 420, damping: 32, mass: .7 } as const
 
@@ -69,4 +69,14 @@ export function DoneToggle({ done, onToggle, color = 'var(--accent)' }: { done: 
       <motion.path d="M5 12l5 5 9-10" fill="none" stroke="var(--accent-ink)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: .25 }} />
     </motion.svg>}</AnimatePresence>
   </motion.button>
+}
+
+/** Número que "conta" até o valor ao aparecer. */
+export function CountUp({ value, suffix = '', dur = .9 }: { value: number; suffix?: string; dur?: number }) {
+  const [v, setV] = useState(0)
+  useEffect(() => {
+    const c = animate(0, value, { duration: dur, ease: [.2, .8, .2, 1], onUpdate: x => setV(x) })
+    return () => c.stop()
+  }, [value, dur])
+  return <>{Math.round(v)}{suffix}</>
 }

@@ -53,6 +53,18 @@ function Shell() {
   const { data, sync, toasts } = useStore(); const { quick } = useEditors()
   const [view, setView] = useState(() => { let v = 'inicio'; try { v = localStorage.getItem('kairotec:view') ?? 'inicio' } catch { /* ignore */ } return LEGACY[v] ?? (NAV.some(n => n.id === v) ? v : 'inicio') })
   const [pal, setPal] = useState(false)
+  const [compact, setCompact] = useState(() => { try { return localStorage.getItem('kairotec:compact') === '1' } catch { return false } })
+  useEffect(() => { try { localStorage.setItem('kairotec:compact', compact ? '1' : '0') } catch { /* ignore */ } }, [compact])
+  // luz que segue o cursor nos cartões
+  useEffect(() => {
+    const h = (e: PointerEvent) => {
+      const el = (e.target as HTMLElement).closest?.('.card, .action, .tcard, .hero') as HTMLElement | null
+      if (!el) return
+      const r = el.getBoundingClientRect()
+      el.style.setProperty('--mx', `${e.clientX - r.left}px`); el.style.setProperty('--my', `${e.clientY - r.top}px`)
+    }
+    window.addEventListener('pointermove', h, { passive: true }); return () => window.removeEventListener('pointermove', h)
+  }, [])
   useEffect(() => { try { localStorage.setItem('kairotec:view', view) } catch { /* ignore */ } }, [view])
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
@@ -68,7 +80,7 @@ function Shell() {
   const overdue = data.tasks.filter(t => t.status !== 'done' && t.due && t.due < new Date().toISOString().slice(0, 10)).length
   const hello = (() => { const h = new Date().getHours(); return h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite' })()
 
-  return <div className="app">
+  return <div className={`app ${compact ? 'compact' : ''}`}>
     <header className="topbar">
       <Logo size={44} />
       <div className="t"><b>kairotec<span style={{ color: 'var(--accent)' }}>.</span></b><span>{hello} · {new Date().toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' })}</span></div>
@@ -76,7 +88,7 @@ function Shell() {
       <motion.button whileTap={{ scale: .9 }} className="btn icon" aria-label="Ajustes" onClick={() => setView('ajustes')}><Icon n="gear" /></motion.button>
     </header>
     <nav className="side">
-      <div className="brand"><Logo size={34} /><b>kairotec<i>.</i></b></div>
+      <div className="brand"><Logo size={34} /><b>kairotec<i>.</i></b><button className="collapse" onClick={() => setCompact(c => !c)} aria-label={compact ? 'Expandir menu' : 'Recolher menu'} title={compact ? 'Expandir menu' : 'Recolher menu'}><Icon n={compact ? 'right' : 'left'} s={14} /></button></div>
       <button className="nav search" onClick={() => setPal(true)}><span className="ico"><Icon n="search" /></span><span className="lbl">Buscar</span><kbd>Ctrl K</kbd></button>
       {NAV.map((n, i) => <Fragment key={n.id}>{i === 4 && <div className="side-sec">Ferramentas</div>}<motion.button whileTap={{ scale: .94 }} key={n.id} className={`nav ${view === n.id ? 'on' : ''} ${n.mob ? '' : 'more'}`} onClick={() => setView(n.id)} aria-label={n.l}>
         {view === n.id && <motion.div layoutId="navpill" className="nav-pill" transition={spring} />}
