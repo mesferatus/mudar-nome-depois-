@@ -107,7 +107,7 @@ function Shell() {
     {!['ajustes', 'notas'].includes(view) && <motion.button className="fab" onClick={() => quick({ kind: view === 'calendario' ? 'event' : 'task' })} initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} whileHover={{ y: -2 }} whileTap={{ scale: .92 }} transition={spring} aria-label="Novo">
       <Icon n="plus" s={20} /> Novo</motion.button>}
     <Palette open={pal} close={() => setPal(false)} go={setView} />
-    <div className="toasts"><AnimatePresence>{toasts.map(t => <motion.div key={t.id} className="toast" layout initial={{ opacity: 0, y: 20, scale: .9 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 10, scale: .95 }} transition={spring}>{t.msg}</motion.div>)}</AnimatePresence></div>
+    <div className="toasts"><AnimatePresence>{toasts.map(t => <motion.div key={t.id} className="toast" layout initial={{ opacity: 0, y: 20, scale: .9 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 10, scale: .95 }} transition={spring}>{t.msg}{t.action && <button className="toast-act" onClick={() => t.action!.run()}>{t.action.label}</button>}</motion.div>)}</AnimatePresence></div>
   </div>
 }
 

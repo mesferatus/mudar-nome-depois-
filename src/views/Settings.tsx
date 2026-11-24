@@ -10,6 +10,9 @@ export const THEMES = [
   { id: 'oliva', name: 'Oliva', c: ['#080a07', '#2d3a1f', '#d8e3a5'] },
   { id: 'noite', name: 'Noite', c: ['#07080d', '#252d5e', '#b8c2ff'] },
   { id: 'creme', name: 'Creme', c: ['#f6efe6', '#fffbff', '#362417'] },
+  { id: 'morango', name: 'Morango 🍓', c: ['#fff5f7', '#ff9fb5', '#f06a8a'] },
+  { id: 'nuvem', name: 'Nuvem ☁️', c: ['#f2f8ff', '#8fb8ff', '#5b8def'] },
+  { id: 'jardim', name: 'Jardim 🌸', c: ['#f4fbf3', '#8fd19e', '#4f9f62'] },
 ]
 
 export default function Settings() {

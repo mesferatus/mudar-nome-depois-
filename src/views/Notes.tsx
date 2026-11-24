@@ -1,100 +1,110 @@
 import { useMemo, useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import { useStore } from '../lib/store'
-import { Btn, Icon, Seg } from '../components/ui'
+import { Btn, Icon, Empty, spring } from '../components/ui'
+import { BlockEditor } from '../components/BlockEditor'
+import { COVERS, ICONS, coverBg } from '../lib/art'
+import { TEMPLATES } from '../lib/blocks'
 import type { Note } from '../lib/types'
 
-const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-function inline(s: string) {
-  return esc(s)
-    .replace(/`([^`]+)`/g, '<code>$1</code>')
-    .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>').replace(/\*([^*]+)\*/g, '<i>$1</i>')
-    .replace(/\[\[([^\]]+)\]\]/g, '<span class="wl" data-link="$1">$1</span>')
-    .replace(/(^|\s)#([\p{L}\w-]+)/gu, '$1<span class="tag">#$2</span>')
-    .replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noreferrer">$1</a>')
-}
-export function renderMd(md: string) {
-  const out: string[] = []; let list = false
-  md.split('\n').forEach((l, i) => {
-    const task = l.match(/^\s*- \[( |x)\] (.*)/), li = l.match(/^\s*[-*] (.*)/)
-    if ((task || li) && !list) { out.push('<ul>'); list = true }
-    if (!(task || li) && list) { out.push('</ul>'); list = false }
-    if (task) out.push(`<li class="task"><input type="checkbox" data-line="${i}" ${task[1] === 'x' ? 'checked' : ''}/>${inline(task[2])}</li>`)
-    else if (li) out.push(`<li>${inline(li[1])}</li>`)
-    else if (/^### /.test(l)) out.push(`<h3>${inline(l.slice(4))}</h3>`)
-    else if (/^## /.test(l)) out.push(`<h2>${inline(l.slice(3))}</h2>`)
-    else if (/^# /.test(l)) out.push(`<h1>${inline(l.slice(2))}</h1>`)
-    else if (/^> /.test(l)) out.push(`<blockquote>${inline(l.slice(2))}</blockquote>`)
-    else if (l.trim() === '---') out.push('<hr/>')
-    else if (l.trim()) out.push(`<p>${inline(l)}</p>`)
-  })
-  if (list) out.push('</ul>')
-  return out.join('')
-}
 const tagsOf = (body: string) => [...new Set([...body.matchAll(/(?:^|\s)#([\p{L}\w-]+)/gu)].map(m => m[1]))]
 
 export default function Notes() {
   const { data, upsertNote, removeNote, toast } = useStore()
-  const [sel, setSel] = useState<string | undefined>(() => data.notes.find(n => n.pinned)?.id ?? data.notes[0]?.id)
-  const [mode, setMode] = useState<'ler' | 'editar'>('ler')
+  const [sel, setSel] = useState<string | undefined>(() => data.notes.find(n => n.pinned)?.id ?? data.notes.find(n => !n.parentId)?.id)
   const [q, setQ] = useState('')
-  const [tag, setTag] = useState<string>()
-  const note = data.notes.find(n => n.id === sel)
   const [listOpen, setListOpen] = useState(true)
-  const open = (id?: string) => { setSel(id); setListOpen(false) }
+  const [picker, setPicker] = useState<'icon' | 'cover' | 'tpl' | null>(null)
+  const note = data.notes.find(n => n.id === sel)
 
-  const folders = useMemo(() => {
-    const f: Record<string, Note[]> = {}
-    data.notes.filter(n => (!q || (n.title + n.body).toLowerCase().includes(q.toLowerCase())) && (!tag || n.tags.includes(tag)))
-      .sort((a, b) => Number(!!b.pinned) - Number(!!a.pinned) || b.updatedAt.localeCompare(a.updatedAt))
-      .forEach(n => (f[n.folder] ??= []).push(n))
-    return f
-  }, [data.notes, q, tag])
-  const allTags = [...new Set(data.notes.flatMap(n => n.tags))]
+  const open = (id?: string) => { setSel(id); setListOpen(false); setPicker(null) }
+  const kids = (id?: string) => data.notes.filter(n => (n.parentId ?? undefined) === id && (id ? true : !n.parentId)).sort((a, b) => a.title.localeCompare(b.title))
+  const crumbs = useMemo(() => { const c: Note[] = []; let p = note; while (p?.parentId) { p = data.notes.find(n => n.id === p!.parentId); if (p) c.unshift(p) } return c }, [note, data.notes])
   const backlinks = note ? data.notes.filter(n => n.id !== note.id && n.body.includes(`[[${note.title}]]`)) : []
+  const hits = q ? data.notes.filter(n => (n.title + ' ' + n.body).toLowerCase().includes(q.toLowerCase())) : []
 
-  const create = (title = 'Nova página', folder = note?.folder ?? 'Geral') => { const n = upsertNote({ title, folder, body: `# ${title}\n\n` }); open(n.id); setMode('editar'); return n }
+  const create = (opts: Partial<Note> = {}) => {
+    const n = upsertNote({ title: 'Sem título', icon: '📄', folder: 'Geral', body: '', ...opts })
+    if (opts.parentId) upsertNote({ id: opts.parentId, expanded: true })
+    open(n.id); return n
+  }
   const save = (p: Partial<Note>) => note && upsertNote({ id: note.id, ...p, ...(p.body !== undefined ? { tags: tagsOf(p.body) } : {}) })
-
-  const click = (e: React.MouseEvent) => {
-    const el = e.target as HTMLElement
-    if (el.dataset.link) { const ex = data.notes.find(n => n.title.toLowerCase() === el.dataset.link!.toLowerCase()); if (ex) setSel(ex.id); else { create(el.dataset.link); toast('Página criada') } }
-    if (el.tagName === 'INPUT' && el.dataset.line && note) {
-      const lines = note.body.split('\n'), i = Number(el.dataset.line)
-      lines[i] = lines[i].includes('- [x]') ? lines[i].replace('- [x]', '- [ ]') : lines[i].replace('- [ ]', '- [x]'); save({ body: lines.join('\n') })
-    }
+  const link = (title: string) => {
+    const ex = data.notes.find(n => n.title.toLowerCase() === title.toLowerCase())
+    if (ex) open(ex.id); else { create({ title, parentId: note?.id }); toast('Página criada') }
   }
 
-  return <motion.div className={`notes ${listOpen ? 'show-list' : ''}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-    <div className="nlist">
-      <div className="row" style={{ marginBottom: 10 }}><input className="input" placeholder="Buscar notas…" value={q} onChange={e => setQ(e.target.value)} /><Btn variant="icon primary" onClick={() => create()}><Icon n="plus" /></Btn></div>
-      {allTags.length > 0 && <div className="row wrap" style={{ gap: 4, marginBottom: 8 }}>{allTags.map(t => <button key={t} className="chip" style={{ border: 0, cursor: 'pointer', background: tag === t ? 'var(--accent)' : undefined, color: tag === t ? 'var(--accent-ink)' : undefined }} onClick={() => setTag(tag === t ? undefined : t)}>#{t}</button>)}</div>}
-      {Object.entries(folders).map(([f, ns]) => <div key={f}>
-        <div className="side-sec" style={{ paddingTop: 10 }}>{f}</div>
-        {ns.map(n => <div key={n.id} className={`nitem ${n.id === sel ? 'on' : ''}`} onClick={() => open(n.id)}>
-          {n.id === sel && <motion.div layoutId="nsel" className="nav-pill" style={{ zIndex: 0 }} />}
-          <div style={{ position: 'relative' }}><div className="tt">{n.pinned && '📌 '}{n.title}</div><div className="ss">{new Date(n.updatedAt).toLocaleDateString('pt-BR')} · {n.body.replace(/[#*[\]]/g, '').slice(0, 40)}</div></div>
-        </div>)}
-      </div>)}
-    </div>
-    <div className="neditor">
-      <AnimatePresence mode="wait">{note ? <motion.div key={note.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: .2 }}>
-        <div className="row" style={{ marginBottom: 14 }}>
-          <Btn variant="icon mob-only" onClick={() => setListOpen(true)} aria-label="Voltar para a lista"><Icon n="left" /></Btn>
-          <input className="input" style={{ width: 160, height: 30 }} value={note.folder} onChange={e => save({ folder: e.target.value })} title="Pasta" />
-          <div style={{ flex: 1 }} />
-          <Seg value={mode} onChange={setMode} options={[{ v: 'ler', l: 'Ler' }, { v: 'editar', l: 'Editar' }]} />
-          <Btn variant="ghost icon" title="Fixar" onClick={() => save({ pinned: !note.pinned })} style={{ color: note.pinned ? 'var(--accent)' : undefined }}><Icon n="pin" /></Btn>
-          <Btn variant="ghost icon" title="Excluir" onClick={() => { if (confirm(`Excluir "${note.title}"?`)) { removeNote(note.id); setSel(data.notes.find(n => n.id !== note.id)?.id) } }}><Icon n="trash" /></Btn>
+  const Tree = ({ parent, depth }: { parent?: string; depth: number }) => <>
+    {kids(parent).map(n => {
+      const ch = kids(n.id)
+      return <div key={n.id}>
+        <div className={`titem ${n.id === sel ? 'on' : ''}`} style={{ paddingLeft: 6 + depth * 14 }} onClick={() => open(n.id)}>
+          <button className="tcaret" style={{ visibility: ch.length ? 'visible' : 'hidden' }} onClick={e => { e.stopPropagation(); upsertNote({ id: n.id, expanded: !n.expanded }) }}>
+            <motion.span animate={{ rotate: n.expanded ? 90 : 0 }} style={{ display: 'inline-block' }}>▸</motion.span></button>
+          <span className="ticon">{n.icon ?? '📄'}</span><span className="tt">{n.title || 'Sem título'}</span>
+          <button className="tadd" title="Nova subpágina" onClick={e => { e.stopPropagation(); create({ parentId: n.id }) }}>+</button>
         </div>
-        <input className="ntitle" value={note.title} onChange={e => save({ title: e.target.value })} />
-        <div className="row wrap" style={{ gap: 6, margin: '6px 0 18px' }}>{note.tags.map(t => <span key={t} className="chip">#{t}</span>)}</div>
-        {mode === 'editar'
-          ? <textarea className="nbody" autoFocus value={note.body} onChange={e => save({ body: e.target.value })} placeholder="Escreva em Markdown… use [[links]] e #tags" />
-          : <div className="md" onClick={click} onDoubleClick={() => setMode('editar')} dangerouslySetInnerHTML={{ __html: renderMd(note.body) || '<p class="muted">Página vazia — clique duas vezes para editar.</p>' }} />}
-        {backlinks.length > 0 && <div style={{ marginTop: 40, borderTop: '1px solid var(--line)', paddingTop: 14 }}><div className="side-sec" style={{ padding: '0 0 8px' }}>Mencionada em</div>
-          {backlinks.map(b => <div key={b.id} className="nitem" onClick={() => setSel(b.id)}>↳ {b.title}</div>)}</div>}
-      </motion.div> : <div className="muted">Nenhuma nota. <Btn onClick={() => create()}>Criar a primeira</Btn></div>}</AnimatePresence>
+        <AnimatePresence initial={false}>{n.expanded && ch.length > 0 && <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} style={{ overflow: 'hidden' }}>
+          <Tree parent={n.id} depth={depth + 1} /></motion.div>}</AnimatePresence>
+      </div>
+    })}
+  </>
+
+  const favs = data.notes.filter(n => n.pinned)
+
+  return <motion.div className={`notes ${listOpen ? 'show-list' : ''}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+    <aside className="nlist">
+      <div className="row" style={{ marginBottom: 12 }}>
+        <input className="input" placeholder="Buscar em tudo…" value={q} onChange={e => setQ(e.target.value)} />
+        <Btn variant="icon primary" onClick={() => create()} aria-label="Nova página"><Icon n="plus" /></Btn>
+      </div>
+      {q ? <div>{hits.length ? hits.map(n => <div key={n.id} className="titem" onClick={() => { open(n.id); setQ('') }}><span className="ticon">{n.icon ?? '📄'}</span><span className="tt">{n.title}</span></div>) : <div className="muted" style={{ padding: 10 }}>Nada encontrado</div>}</div> : <>
+        {favs.length > 0 && <><div className="side-sec">Favoritos</div>{favs.map(n => <div key={n.id} className={`titem ${n.id === sel ? 'on' : ''}`} onClick={() => open(n.id)}><span className="tcaret" /><span className="ticon">{n.icon ?? '📄'}</span><span className="tt">{n.title}</span></div>)}</>}
+        <div className="side-sec">Páginas</div>
+        <Tree depth={0} />
+        <button className="titem ghost" onClick={() => setPicker('tpl')}><span className="tcaret" /><span className="ticon">✨</span><span className="tt">Começar de um modelo</span></button>
+      </>}
+    </aside>
+
+    <div className="neditor">
+      <AnimatePresence>{picker === 'tpl' && <motion.div className="tpl-grid" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+        <div className="row" style={{ justifyContent: 'space-between' }}><h2 style={{ margin: 0 }}>Modelos</h2><Btn variant="ghost icon" onClick={() => setPicker(null)} aria-label="Fechar"><Icon n="x" /></Btn></div>
+        <div className="tpls">{TEMPLATES.map((t, i) => <motion.button key={t.id} className="tpl" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * .04 }} whileHover={{ y: -3 }}
+          onClick={() => { create({ title: t.name, icon: t.icon, cover: t.cover, body: t.body }); toast('Página criada a partir do modelo') }}>
+          <span className="tpl-c" style={{ background: coverBg(t.cover) }} /><span className="tpl-n">{t.icon} {t.name}</span></motion.button>)}</div>
+      </motion.div>}</AnimatePresence>
+
+      {!note && picker !== 'tpl' && <Empty icon="note" text="Nenhuma página aberta" action="Nova página" onAction={() => create()} />}
+      <AnimatePresence mode="wait">{note && picker !== 'tpl' && <motion.div key={note.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: .2 }}>
+        <div className="crumbs">
+            <Btn variant="icon mob-only" onClick={() => setListOpen(true)} aria-label="Voltar para a lista"><Icon n="left" /></Btn>
+            {crumbs.map(c => <span key={c.id}><button onClick={() => open(c.id)}>{c.icon} {c.title}</button> / </span>)}
+            <span className="muted">{note.icon} {note.title}</span>
+            <span style={{ flex: 1 }} />
+            <Btn variant="ghost icon" title={note.pinned ? 'Remover dos favoritos' : 'Favoritar'} onClick={() => save({ pinned: !note.pinned })} style={{ color: note.pinned ? 'var(--accent)' : undefined }}>{note.pinned ? '★' : '☆'}</Btn>
+            <Btn variant="ghost icon" title="Excluir" onClick={() => { const parent = note.parentId; removeNote(note.id); setSel(parent ?? data.notes.find(n => n.id !== note.id && !n.parentId)?.id) }}><Icon n="trash" /></Btn>
+          </div>
+        {note.cover && <div className="cover" style={{ background: coverBg(note.cover) }}>
+          <div className="cover-act"><button onClick={() => setPicker(picker === 'cover' ? null : 'cover')}>Trocar capa</button><button onClick={() => save({ cover: undefined })}>Remover</button></div></div>}
+        <div className={`nhead ${note.cover ? 'has-cover' : ''}`}>
+          <motion.button className="nicon" whileHover={{ scale: 1.06, rotate: -4 }} whileTap={{ scale: .9 }} onClick={() => setPicker(picker === 'icon' ? null : 'icon')}>{note.icon ?? '📄'}</motion.button>
+          <AnimatePresence>{picker === 'icon' && <motion.div className="pick icons" initial={{ opacity: 0, y: -6, scale: .97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0 }} transition={spring}>
+            {ICONS.map(ic => <button key={ic} onClick={() => { save({ icon: ic }); setPicker(null) }}>{ic}</button>)}</motion.div>}</AnimatePresence>
+          {!note.cover && <div className="nhover"><button onClick={() => setPicker('cover')}>🖼 Adicionar capa</button></div>}
+          <AnimatePresence>{picker === 'cover' && <motion.div className="pick covers" initial={{ opacity: 0, y: -6, scale: .97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0 }} transition={spring}>
+            {COVERS.map(c => <button key={c.id} title={c.name} onClick={() => { save({ cover: c.id }); setPicker(null) }}><span style={{ background: c.bg }} /><small>{c.name}</small></button>)}</motion.div>}</AnimatePresence>
+          <input className="ntitle" value={note.title} placeholder="Sem título" onChange={e => save({ title: e.target.value })} />
+          {note.tags.length > 0 && <div className="row wrap" style={{ gap: 6, margin: '4px 0 6px' }}>{note.tags.map(t => <span key={t} className="chip">#{t}</span>)}</div>}
+        </div>
+        <BlockEditor key={note.id} value={note.body} onChange={body => save({ body })} onLink={link} />
+
+        <div className="subpages">
+          {kids(note.id).map(k => <motion.button key={k.id} className="subpage" whileHover={{ x: 3 }} onClick={() => open(k.id)}><span>{k.icon ?? '📄'}</span>{k.title}</motion.button>)}
+          <button className="subpage ghost" onClick={() => create({ parentId: note.id })}><span>＋</span>Subpágina</button>
+        </div>
+        {backlinks.length > 0 && <div className="backlinks"><div className="side-sec" style={{ padding: '0 0 8px' }}>Mencionada em</div>
+          {backlinks.map(b => <button key={b.id} className="subpage" onClick={() => open(b.id)}><span>{b.icon ?? '📄'}</span>{b.title}</button>)}</div>}
+      </motion.div>}</AnimatePresence>
     </div>
   </motion.div>
 }

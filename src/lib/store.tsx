@@ -1,7 +1,8 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import type { Data, Task, CalEvent, Note, Project, Settings } from './types'
-import { iso, addDays } from './date'
+import { iso, addDays, parse } from './date'
 import { syncAll, loadHandles, type SyncState } from './sync'
+import { DOODLES } from './art'
 
 const KEY = 'kairotec:data'
 export const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4)
@@ -32,20 +33,22 @@ function seed(): Data {
       { id: uid(), title: 'Alinhamento app interno', date: d(2), start: '10:30', end: '11:30', projectId: 'p2' },
     ],
     notes: [
-      { id: uid(), title: 'Bem-vinda ao Kairotec', folder: 'Início', tags: ['guia'], updatedAt: now, pinned: true, body:
-`# Bem-vinda 👋
-
-Este é o seu caderno. Algumas dicas:
-
-- Use **#tags** no texto para agrupar notas.
-- Ligue notas com [[Ideias de BI]] — se a nota não existir, ela é criada ao clicar.
-- \`Ctrl + K\` abre a paleta de comandos de qualquer lugar.
-- Em **Ajustes** você conecta o arquivo de nuvem (OneDrive) e a planilha Excel.
-
+      { id: 'n-welcome', title: 'Bem-vinda ao Kairotec', icon: '🌸', cover: 'coracoes', folder: 'Início', tags: ['guia'], updatedAt: now, pinned: true, expanded: true, body:
+`> 🌸 Este é o seu caderno. Funciona como o Notion: cada linha é um bloco.
+## Como usar
+- Digite **/** numa linha vazia para escolher: título, lista, tarefa, destaque, alternância, código…
+- Atalhos: **# ** vira título, **- ** vira lista, **[] ** vira tarefa, **> ** vira citação.
+- Ligue páginas com [[Ideias de BI]] — se não existir, ela é criada.
+- Passe o mouse à esquerda de um bloco: **+** adiciona e **⋮⋮** arrasta.
+- Clique no ícone e na capa para trocar.
+<details><summary>Atalhos do app</summary>
+Ctrl+K abre a busca · N cria tarefa · Alt+1…6 troca de aba
+</details>
+## Primeiros passos
 - [ ] Conectar pasta do OneDrive
 - [ ] Escolher a planilha de exportação
 - [x] Abrir o app pela primeira vez` },
-      { id: uid(), title: 'Ideias de BI', folder: 'Trabalho', tags: ['bi'], updatedAt: now, body: '# Ideias de BI\n\n- Lead time por fornecedor\n- Curva ABC de peças\n- OTIF semanal #logistica' },
+      { id: uid(), title: 'Ideias de BI', icon: '📊', cover: 'cafe', parentId: 'n-welcome', folder: 'Trabalho', tags: ['bi'], updatedAt: now, body: '# Ideias de BI\n\n- Lead time por fornecedor\n- Curva ABC de peças\n- OTIF semanal #logistica' },
     ],
     settings: { theme: 'cafe', userName: '', weekStart: 1, autoExcel: true, autoCloud: true },
   }
@@ -70,9 +73,10 @@ type Ctx = {
   upsertProject: (p: Partial<Project> & { id?: string }) => Project
   removeProject: (id: string) => void
   setSettings: (s: Partial<Settings>) => void
-  toast: (msg: string) => void
-  toasts: { id: string; msg: string }[]
+  toast: (msg: string, action?: ToastAction) => void
+  toasts: { id: string; msg: string; action?: ToastAction }[]
 }
+export type ToastAction = { label: string; run: () => void }
 const StoreCtx = createContext<Ctx>(null!)
 export const useStore = () => useContext(StoreCtx)
 
@@ -85,18 +89,19 @@ function upsert<T extends { id: string }>(list: T[], item: T) {
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<Data>(load)
   const [sync, setSyncS] = useState<SyncState>({ cloudName: undefined, excelName: undefined, status: 'idle' })
-  const [toasts, setToasts] = useState<{ id: string; msg: string }[]>([])
+  const [toasts, setToasts] = useState<{ id: string; msg: string; action?: ToastAction }[]>([])
   const timer = useRef<number>()
   const first = useRef(true)
 
   const setSync = (s: Partial<SyncState>) => setSyncS(p => ({ ...p, ...s }))
-  const toast = (msg: string) => { const id = uid(); setToasts(t => [...t, { id, msg }]); setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 2800) }
+  const toast = (msg: string, action?: ToastAction) => { const id = uid(); setToasts(t => [...t.slice(-2), { id, msg, action }]); setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), action ? 6000 : 2800) }
 
   useEffect(() => { loadHandles().then(h => setSync({ cloudName: h.cloud?.name, excelName: h.excel?.name })) }, [])
 
   useEffect(() => {
     localStorage.setItem(KEY, JSON.stringify(data))
     document.documentElement.dataset.theme = data.settings.theme
+    document.documentElement.style.setProperty('--doodle', DOODLES[data.settings.theme] ?? 'none')
     if (first.current) { first.current = false; return }
     clearTimeout(timer.current)
     timer.current = window.setTimeout(() => {
@@ -105,41 +110,49 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }, 1200)
   }, [data])
 
-  const mut = (fn: (d: Data) => Data) => setData(d => ({ ...fn(d), updatedAt: new Date().toISOString() }))
+  const ref = useRef(data); ref.current = data
+  const mut = (fn: (d: Data) => Data) => setData(d => { const n = { ...fn(d), updatedAt: new Date().toISOString() }; ref.current = n; return n })
+  const snap = useRef<Data | null>(null)
+  const undoable = (msg: string) => { snap.current = ref.current; toast(msg, { label: 'Desfazer', run: () => { if (snap.current) { const s = snap.current; snap.current = null; setData(s); ref.current = s } } }) }
 
   const api = useMemo<Omit<Ctx, 'data' | 'sync' | 'toasts'>>(() => ({
     setSync, toast,
-    replaceAll: (d) => setData(d),
+    replaceAll: (d) => { ref.current = d; setData(d) },
     upsertTask: (t) => {
-      let res!: Task
-      mut(d => {
-        const prev = d.tasks.find(x => x.id === t.id)
-        res = { tags: [], status: 'todo', priority: 'media', title: 'Nova tarefa', createdAt: new Date().toISOString(), ...prev, ...t, id: t.id ?? uid() } as Task
-        if (res.status === 'done' && !res.doneAt) res.doneAt = iso(new Date())
-        if (res.status !== 'done') res.doneAt = undefined
-        return { ...d, tasks: upsert(d.tasks, res) }
-      })
+      const d0 = ref.current, prev = d0.tasks.find(x => x.id === t.id)
+      const res = { tags: [], status: 'todo', priority: 'media', title: 'Nova tarefa', createdAt: new Date().toISOString(), ...prev, ...t, id: t.id ?? uid() } as Task
+      if (res.status === 'done' && !res.doneAt) res.doneAt = iso(new Date())
+      if (res.status !== 'done') res.doneAt = undefined
+      // tarefa recorrente: ao concluir, nasce a próxima
+      let next: Task | undefined
+      if (res.repeat && res.status === 'done' && prev?.status !== 'done') {
+        const base = parse(res.due ?? iso(new Date()))
+        const nd = res.repeat === 'diaria' ? addDays(base, 1) : res.repeat === 'semanal' ? addDays(base, 7) : new Date(base.getFullYear(), base.getMonth() + 1, base.getDate())
+        next = { ...res, id: uid(), status: 'todo', doneAt: undefined, due: iso(nd), start: iso(nd), createdAt: new Date().toISOString(), checklist: res.checklist?.map(c => ({ ...c, done: false })) }
+      }
+      mut(d => ({ ...d, tasks: next ? [...upsert(d.tasks, res), next] : upsert(d.tasks, res) }))
       return res
     },
-    removeTask: (id) => mut(d => ({ ...d, tasks: d.tasks.filter(x => x.id !== id) })),
+    removeTask: (id) => { const t = ref.current.tasks.find(x => x.id === id); mut(d => ({ ...d, tasks: d.tasks.filter(x => x.id !== id) })); undoable(`"${t?.title ?? 'Tarefa'}" excluída`) },
     upsertEvent: (e) => {
-      let res!: CalEvent
-      mut(d => { res = { title: 'Novo evento', date: iso(new Date()), start: '09:00', end: '10:00', ...d.events.find(x => x.id === e.id), ...e, id: e.id ?? uid() } as CalEvent; return { ...d, events: upsert(d.events, res) } })
-      return res
+      const res = { title: 'Novo evento', date: iso(new Date()), start: '09:00', end: '10:00', ...ref.current.events.find(x => x.id === e.id), ...e, id: e.id ?? uid() } as CalEvent
+      mut(d => ({ ...d, events: upsert(d.events, res) })); return res
     },
-    removeEvent: (id) => mut(d => ({ ...d, events: d.events.filter(x => x.id !== id) })),
+    removeEvent: (id) => { mut(d => ({ ...d, events: d.events.filter(x => x.id !== id) })); undoable('Evento excluído') },
     upsertNote: (n) => {
-      let res!: Note
-      mut(d => { res = { title: 'Sem título', body: '', folder: 'Geral', tags: [], ...d.notes.find(x => x.id === n.id), ...n, id: n.id ?? uid(), updatedAt: new Date().toISOString() } as Note; return { ...d, notes: upsert(d.notes, res) } })
-      return res
+      const res = { title: 'Sem título', body: '', folder: 'Geral', tags: [], ...ref.current.notes.find(x => x.id === n.id), ...n, id: n.id ?? uid(), updatedAt: new Date().toISOString() } as Note
+      mut(d => ({ ...d, notes: upsert(d.notes, res) })); return res
     },
-    removeNote: (id) => mut(d => ({ ...d, notes: d.notes.filter(x => x.id !== id) })),
+    removeNote: (id) => {
+      const n = ref.current.notes.find(x => x.id === id)
+      mut(d => ({ ...d, notes: d.notes.filter(x => x.id !== id).map(x => x.parentId === id ? { ...x, parentId: n?.parentId } : x) }))
+      undoable(`"${n?.title ?? 'Página'}" excluída`)
+    },
     upsertProject: (p) => {
-      let res!: Project
-      mut(d => { res = { name: 'Projeto', color: '#8a8f98', ...d.projects.find(x => x.id === p.id), ...p, id: p.id ?? uid() } as Project; return { ...d, projects: upsert(d.projects, res) } })
-      return res
+      const res = { name: 'Projeto', color: '#8a8f98', ...ref.current.projects.find(x => x.id === p.id), ...p, id: p.id ?? uid() } as Project
+      mut(d => ({ ...d, projects: upsert(d.projects, res) })); return res
     },
-    removeProject: (id) => mut(d => ({ ...d, projects: d.projects.filter(x => x.id !== id), tasks: d.tasks.map(t => t.projectId === id ? { ...t, projectId: undefined } : t) })),
+    removeProject: (id) => { undoable('Projeto removido'); mut(d => ({ ...d, projects: d.projects.filter(x => x.id !== id), tasks: d.tasks.map(t => t.projectId === id ? { ...t, projectId: undefined } : t) })) },
     setSettings: (s) => mut(d => ({ ...d, settings: { ...d.settings, ...s } })),
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [])
