@@ -80,3 +80,11 @@ export function CountUp({ value, suffix = '', dur = .9 }: { value: number; suffi
   }, [value, dur])
   return <>{Math.round(v)}{suffix}</>
 }
+
+/** true em telas de celular (< 900px). */
+export function useIsMobile() {
+  const q = '(max-width: 899px)'
+  const [m, setM] = useState(() => typeof window !== 'undefined' && window.matchMedia(q).matches)
+  useEffect(() => { const mq = window.matchMedia(q); const h = () => setM(mq.matches); mq.addEventListener('change', h); return () => mq.removeEventListener('change', h) }, [])
+  return m
+}

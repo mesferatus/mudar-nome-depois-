@@ -40,6 +40,8 @@ export default function Notes() {
   const [q, setQ] = useState('')
   const [tag, setTag] = useState<string>()
   const note = data.notes.find(n => n.id === sel)
+  const [listOpen, setListOpen] = useState(true)
+  const open = (id?: string) => { setSel(id); setListOpen(false) }
 
   const folders = useMemo(() => {
     const f: Record<string, Note[]> = {}
@@ -51,7 +53,7 @@ export default function Notes() {
   const allTags = [...new Set(data.notes.flatMap(n => n.tags))]
   const backlinks = note ? data.notes.filter(n => n.id !== note.id && n.body.includes(`[[${note.title}]]`)) : []
 
-  const create = (title = 'Nova página', folder = note?.folder ?? 'Geral') => { const n = upsertNote({ title, folder, body: `# ${title}\n\n` }); setSel(n.id); setMode('editar'); return n }
+  const create = (title = 'Nova página', folder = note?.folder ?? 'Geral') => { const n = upsertNote({ title, folder, body: `# ${title}\n\n` }); open(n.id); setMode('editar'); return n }
   const save = (p: Partial<Note>) => note && upsertNote({ id: note.id, ...p, ...(p.body !== undefined ? { tags: tagsOf(p.body) } : {}) })
 
   const click = (e: React.MouseEvent) => {
@@ -63,13 +65,13 @@ export default function Notes() {
     }
   }
 
-  return <motion.div className="notes" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+  return <motion.div className={`notes ${listOpen ? 'show-list' : ''}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
     <div className="nlist">
       <div className="row" style={{ marginBottom: 10 }}><input className="input" placeholder="Buscar notas…" value={q} onChange={e => setQ(e.target.value)} /><Btn variant="icon primary" onClick={() => create()}><Icon n="plus" /></Btn></div>
       {allTags.length > 0 && <div className="row wrap" style={{ gap: 4, marginBottom: 8 }}>{allTags.map(t => <button key={t} className="chip" style={{ border: 0, cursor: 'pointer', background: tag === t ? 'var(--accent)' : undefined, color: tag === t ? 'var(--accent-ink)' : undefined }} onClick={() => setTag(tag === t ? undefined : t)}>#{t}</button>)}</div>}
       {Object.entries(folders).map(([f, ns]) => <div key={f}>
         <div className="side-sec" style={{ paddingTop: 10 }}>{f}</div>
-        {ns.map(n => <div key={n.id} className={`nitem ${n.id === sel ? 'on' : ''}`} onClick={() => setSel(n.id)}>
+        {ns.map(n => <div key={n.id} className={`nitem ${n.id === sel ? 'on' : ''}`} onClick={() => open(n.id)}>
           {n.id === sel && <motion.div layoutId="nsel" className="nav-pill" style={{ zIndex: 0 }} />}
           <div style={{ position: 'relative' }}><div className="tt">{n.pinned && '📌 '}{n.title}</div><div className="ss">{new Date(n.updatedAt).toLocaleDateString('pt-BR')} · {n.body.replace(/[#*[\]]/g, '').slice(0, 40)}</div></div>
         </div>)}
@@ -78,6 +80,7 @@ export default function Notes() {
     <div className="neditor">
       <AnimatePresence mode="wait">{note ? <motion.div key={note.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: .2 }}>
         <div className="row" style={{ marginBottom: 14 }}>
+          <Btn variant="icon mob-only" onClick={() => setListOpen(true)} aria-label="Voltar para a lista"><Icon n="left" /></Btn>
           <input className="input" style={{ width: 160, height: 30 }} value={note.folder} onChange={e => save({ folder: e.target.value })} title="Pasta" />
           <div style={{ flex: 1 }} />
           <Seg value={mode} onChange={setMode} options={[{ v: 'ler', l: 'Ler' }, { v: 'editar', l: 'Editar' }]} />

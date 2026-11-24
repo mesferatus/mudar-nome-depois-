@@ -29,6 +29,10 @@ Use **Microsoft Edge** ou **Google Chrome** (necessário para gravar direto em a
 
 Atalhos: `Ctrl+K` paleta de comandos · `Alt+1…7` trocar de aba · `N` nova tarefa.
 
+## Instalar como app
+
+No Edge/Chrome do PC: ícone de instalar na barra de endereço. No celular: menu → *Adicionar à tela inicial*. Abre em janela própria e funciona sem internet.
+
 ## Nuvem e Excel (arquivo único)
 
 Em **Ajustes → Nuvem & Excel**:

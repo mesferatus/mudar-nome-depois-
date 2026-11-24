@@ -25,7 +25,7 @@
 - [ ] Importar planilhas existentes (.xlsx) como tarefas
 
 ## 3. Produto
-- [ ] App instalável (PWA): ícone no celular e no PC, funciona offline
+- [x] App instalável (PWA): ícone no celular e no PC, funciona offline
 - [ ] Tarefas recorrentes e subtarefas
 - [ ] Mais temas e editor de tema próprio
 
