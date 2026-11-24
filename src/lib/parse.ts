@@ -17,6 +17,7 @@ export interface Parsed {
   projectId?: string
   priority?: Priority
   estimate?: number
+  repeat?: 'diaria' | 'semanal' | 'mensal'
   tags: string[]
 }
 
@@ -34,6 +35,14 @@ export function parseQuick(input: string, projects: Project[], now = new Date())
   take(/^\s*(nota|note)\s*:\s*/i, () => { out.kind = 'note' })
   take(/^\s*(evento|reuniao|reunião)\s*:\s*/i, () => { out.kind = 'event' })
   take(/^\s*(tarefa|task)\s*:\s*/i, () => { out.kind = 'task' })
+
+  // recorrência: "todo dia", "toda segunda", "semanal", "mensal"
+  take(/\s(todo dia|todos os dias|diariamente)(?=\s)/i, () => { out.repeat = 'diaria' })
+  take(/\s(toda semana|semanalmente|semanal)(?=\s)/i, () => { out.repeat = 'semanal' })
+  take(/\s(todo m[eê]s|mensalmente|mensal)(?=\s)/i, () => { out.repeat = 'mensal' })
+  take(/\s(?:tod[ao]s? ?a?s?) (domingo|segunda|ter[cç]a|quarta|quinta|sexta|s[aá]bado)s?(?:-feira)?(?=\s)/i, m => {
+    out.repeat = 'semanal'; s = s + ` ${m[1]} `
+  })
 
   // estimativa (~3h, ~30min)
   take(/\s~(\d+(?:[.,]\d+)?)\s*(h|min)\b/i, m => { const v = Number(m[1].replace(',', '.')); out.estimate = m[2].toLowerCase() === 'min' ? Math.round((v / 60) * 10) / 10 : v })

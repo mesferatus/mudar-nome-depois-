@@ -2,14 +2,14 @@ import type { ReactNode } from 'react'
 import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { useStore } from '../lib/store'
-import { Page, Btn, Icon } from '../components/ui'
+import { Page, Btn, Icon, useIsMobile } from '../components/ui'
 import { useEditors } from '../components/editors'
 import { WD, MONTHS, addDays, iso, startOfWeek, toMin, pad, today } from '../lib/date'
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i), PX = 48
 
 export default function Agenda({ switcher }: { switcher?: ReactNode }) {
-  const { data, upsertEvent } = useStore(); const { editEvent } = useEditors()
+  const { data, upsertEvent } = useStore(); const { editEvent, editTask, quick } = useEditors()
   const [anchor, setAnchor] = useState(new Date())
   const [now, setNow] = useState(new Date())
   const scroller = useRef<HTMLDivElement>(null)
@@ -33,6 +33,21 @@ export default function Agenda({ switcher }: { switcher?: ReactNode }) {
     upsertEvent({ id, date: ds, start: f(start), end: f(start + dur) })
   }
 
+  const mobile = useIsMobile()
+  if (mobile) return <Page>
+    <div className="head"><div><h1>{MONTHS[ws.getMonth()]} <span className="muted" style={{ fontWeight: 500 }}>{ws.getFullYear()}</span></h1></div>
+      {switcher}<div className="row" style={{ gap: 6, marginLeft: 'auto' }}><Btn variant="icon" onClick={() => setAnchor(addDays(anchor, -7))} aria-label="Semana anterior"><Icon n="left" /></Btn><Btn variant="icon" onClick={() => setAnchor(addDays(anchor, 7))} aria-label="Próxima semana"><Icon n="right" /></Btn></div></div>
+    <div className="wlist">{days.map((d, i) => {
+      const ds = iso(d), evs = data.events.filter(e => e.date === ds).sort((a, b) => a.start.localeCompare(b.start)), tks = data.tasks.filter(x => x.due === ds && x.status !== 'done')
+      return <motion.div key={ds} className={`wday ${ds === t ? 'today' : ''}`} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * .03 }}>
+        <div className="wd-h"><b>{d.getDate()}</b><span>{WD[d.getDay()]}</span><button className="btn ghost sm icon" onClick={() => quick({ kind: 'event', date: ds })} aria-label="Adicionar"><Icon n="plus" s={15} /></button></div>
+        {evs.length + tks.length === 0 ? <div className="wd-empty">Livre</div> : <div className="wd-items">
+          {evs.map(e => <div key={e.id} className="wd-it" onClick={() => editEvent(e)} style={{ borderColor: proj(e.projectId)?.color ?? 'var(--accent)' }}><span className="mono">{e.start}</span>{e.title}</div>)}
+          {tks.map(x => <div key={x.id} className="wd-it task" onClick={() => editTask(x)} style={{ borderColor: proj(x.projectId)?.color ?? 'var(--muted)' }}><span className="mono">◆</span>{x.title}</div>)}
+        </div>}
+      </motion.div>
+    })}</div>
+  </Page>
   return <Page wide>
     <div className="head">
       <div><h1>{MONTHS[ws.getMonth()]} <span className="muted" style={{ fontWeight: 500 }}>{ws.getFullYear()}</span></h1><p>Clique num horário para criar · arraste para mover</p></div><div className="sp" />

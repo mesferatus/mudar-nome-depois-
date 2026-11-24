@@ -4,6 +4,8 @@ import { StoreProvider, useStore } from './lib/store'
 import { EditorsProvider, useEditors } from './components/editors'
 import { Icon, spring } from './components/ui'
 import { Logo } from './components/Logo'
+import { Onboarding } from './components/Onboarding'
+import { useReminders } from './lib/reminders'
 import Dashboard from './views/Dashboard'
 import Calendar from './views/Calendar'
 import Board from './views/Board'
@@ -53,6 +55,7 @@ function Shell() {
   const { data, sync, toasts } = useStore(); const { quick } = useEditors()
   const [view, setView] = useState(() => { let v = 'inicio'; try { v = localStorage.getItem('kairotec:view') ?? 'inicio' } catch { /* ignore */ } return LEGACY[v] ?? (NAV.some(n => n.id === v) ? v : 'inicio') })
   const [pal, setPal] = useState(false)
+  useReminders(data)
   const [compact, setCompact] = useState(() => { try { return localStorage.getItem('kairotec:compact') === '1' } catch { return false } })
   useEffect(() => { try { localStorage.setItem('kairotec:compact', compact ? '1' : '0') } catch { /* ignore */ } }, [compact])
   // luz que segue o cursor nos cartões
@@ -107,6 +110,7 @@ function Shell() {
     {!['ajustes', 'notas'].includes(view) && <motion.button className="fab" onClick={() => quick({ kind: view === 'calendario' ? 'event' : 'task' })} initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} whileHover={{ y: -2 }} whileTap={{ scale: .92 }} transition={spring} aria-label="Novo">
       <Icon n="plus" s={20} /> Novo</motion.button>}
     <Palette open={pal} close={() => setPal(false)} go={setView} />
+    <AnimatePresence>{!data.settings.onboarded && <Onboarding key="ob" />}</AnimatePresence>
     <div className="toasts"><AnimatePresence>{toasts.map(t => <motion.div key={t.id} className="toast" layout initial={{ opacity: 0, y: 20, scale: .9 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 10, scale: .95 }} transition={spring}>{t.msg}{t.action && <button className="toast-act" onClick={() => t.action!.run()}>{t.action.label}</button>}</motion.div>)}</AnimatePresence></div>
   </div>
 }

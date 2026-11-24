@@ -21,12 +21,16 @@
 - [ ] Agendamento das rotinas
 
 ## 2. Integrações
-- [ ] Importar calendário do Outlook (.ics) e, depois, Microsoft Graph
+- [x] Importar calendário do Outlook (.ics)
+- [ ] Sincronização direta com Microsoft Graph
 - [ ] Importar planilhas existentes (.xlsx) como tarefas
 
 ## 3. Produto
 - [x] App instalável (PWA): ícone no celular e no PC, funciona offline
-- [ ] Tarefas recorrentes e subtarefas
+- [x] Tarefas recorrentes e subtarefas (checklist)
+- [x] Caderno estilo Notion (páginas, capas, blocos, modelos)
+- [x] Temas fofos com desenhos
+- [ ] Bancos de dados nas páginas (tabelas estilo Notion)
 - [ ] Mais temas e editor de tema próprio
 
 ## 4. Qualidade (já automatizado)

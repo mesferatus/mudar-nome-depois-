@@ -2,6 +2,7 @@ import { useStore } from '../lib/store'
 import { Page, Card, Btn, Icon, Seg } from '../components/ui'
 import { fsSupported, pickCloud, pickExcel, readCloud, forget, download, syncAll, regrant } from '../lib/sync'
 import { buildWorkbook } from '../lib/excel'
+import { parseIcs, icsKey } from '../lib/ics'
 import type { Data } from '../lib/types'
 
 export const THEMES = [
@@ -16,7 +17,7 @@ export const THEMES = [
 ]
 
 export default function Settings() {
-  const { data, setSettings, sync, setSync, replaceAll, toast, upsertProject, removeProject } = useStore()
+  const { data, setSettings, sync, setSync, replaceAll, toast, upsertProject, removeProject, upsertEvent } = useStore()
   const s = data.settings
   const fs = fsSupported()
 
@@ -72,6 +73,23 @@ export default function Settings() {
         <Btn variant="sm" style={{ marginTop: 10 }} onClick={() => upsertProject({ name: 'Novo projeto', color: ['#5b8def', '#e0a458', '#6fbf8e', '#c97b9b', '#9b7fd1', '#4fb3b3', '#d0705a'][data.projects.length % 7] })}><Icon n="plus" /> Projeto</Btn>
       </Card>
 
+      <Card title="Integrações">
+        <div className="list-row"><Icon n="cal" /><div style={{ flex: 1 }}><b>Calendário do Outlook (.ics)</b><div className="muted" style={{ fontSize: 12 }}>No Outlook: Arquivo → Salvar calendário (.ics). Eventos repetidos não são duplicados.</div></div>
+          <label className="btn sm">Importar<input type="file" accept=".ics,text/calendar" hidden onChange={async e => {
+            const f = e.target.files?.[0]; if (!f) return
+            const evs = parseIcs(await f.text()), have = new Set(data.events.map(icsKey))
+            const fresh = evs.filter(x => !have.has(icsKey(x)))
+            fresh.forEach(x => upsertEvent(x)); toast(`${fresh.length} evento(s) importado(s)${evs.length - fresh.length ? ` · ${evs.length - fresh.length} já existiam` : ''}`); e.target.value = ''
+          }} /></label></div>
+        <div className="list-row"><span style={{ fontSize: 18 }}>🔔</span><div style={{ flex: 1 }}><b>Lembretes</b><div className="muted" style={{ fontSize: 12 }}>Aviso 10 min antes de cada evento e um resumo das entregas do dia (com o app aberto ou instalado).</div></div>
+          <Btn variant={s.reminders ? 'sm primary' : 'sm'} onClick={async () => {
+            if (s.reminders) return setSettings({ reminders: false })
+            if (!('Notification' in window)) return toast('Este navegador não suporta notificações')
+            const p = await Notification.requestPermission(); if (p === 'granted') { setSettings({ reminders: true }); toast('Lembretes ligados 🔔') } else toast('Permissão negada no navegador')
+          }}>{s.reminders ? 'Ligados' : 'Ligar'}</Btn></div>
+        <div className="list-row"><span style={{ fontSize: 18 }}>👋</span><div style={{ flex: 1 }}><b>Boas-vindas</b><div className="muted" style={{ fontSize: 12 }}>Ver de novo a configuração inicial.</div></div>
+          <Btn variant="sm" onClick={() => setSettings({ onboarded: false })}>Rever</Btn></div>
+      </Card>
       <Card title="Exportar & importar">
         <div className="row wrap">
           <Btn onClick={async () => download(await buildWorkbook(data), 'Kairotec-Planner.xlsx')}><Icon n="sheet" /> Baixar .xlsx</Btn>

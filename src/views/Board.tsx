@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../lib/store'
-import { Page, Icon, Seg, spring, Empty, DoneToggle } from '../components/ui'
+import { Page, Icon, Seg, spring, Empty, DoneToggle, useIsMobile } from '../components/ui'
 import { useEditors } from '../components/editors'
 import type { Status } from '../lib/types'
 import { STATUS_LABEL } from '../lib/types'
-import { fmt, today, daysBetween } from '../lib/date'
+import { fmt, today, daysBetween, iso, addDays, parse } from '../lib/date'
 
 const COLS: Status[] = ['todo', 'doing', 'review', 'done']
 const CC: Record<Status, string> = { todo: 'var(--faint)', doing: 'var(--info)', review: 'var(--warn)', done: 'var(--ok)' }
@@ -18,6 +18,7 @@ export default function Board() {
   const [view, setView] = useState<'quadro' | 'lista'>('quadro')
   const [q, setQ] = useState('')
   const t = today()
+  const mobile = useIsMobile()
   const tasks = data.tasks.filter(x => (pf === 'all' || x.projectId === pf) && x.title.toLowerCase().includes(q.toLowerCase()))
   const proj = (id?: string) => data.projects.find(p => p.id === id)
 
@@ -40,7 +41,11 @@ export default function Board() {
         onDrop={e => { setOver(undefined); upsertTask({ id: e.dataTransfer.getData('text'), status: s }) }}>
         <div className="col-h"><span className="dot" style={{ background: CC[s] }} />{STATUS_LABEL[s]}<span className="muted" style={{ fontWeight: 500 }}>{items.length}</span>
           <button className="btn ghost sm" style={{ marginLeft: 'auto' }} onClick={() => s === 'todo' ? quick({ kind: 'task' }) : editTask({ status: s, start: t })}><Icon n="plus" s={14} /></button></div>
-        <div className="scroll">{items.length === 0 && <Empty icon={s === 'done' ? 'check' : 'board'} text={s === 'done' ? 'Nada concluído ainda' : 'Solte uma tarefa aqui'} />}<AnimatePresence initial={false}>{items.map(x => <motion.div key={x.id} layout layoutId={x.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: .96 }} transition={spring}>
+        <div className="scroll">{items.length === 0 && <Empty icon={s === 'done' ? 'check' : 'board'} text={s === 'done' ? 'Nada concluído ainda' : 'Solte uma tarefa aqui'} />}<AnimatePresence initial={false}>{items.map(x => <motion.div key={x.id} layout layoutId={x.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: .96 }} transition={spring} className="swipe"
+          {...(mobile ? { drag: 'x' as const, dragConstraints: { left: 0, right: 0 }, dragElastic: .5, dragSnapToOrigin: true, onDragEnd: (_: unknown, i: { offset: { x: number } }) => {
+            if (i.offset.x > 90) { upsertTask({ id: x.id, status: s === 'done' ? 'todo' : 'done' }); toast(s === 'done' ? 'Reaberta' : 'Concluída ✓') }
+            else if (i.offset.x < -90) { const nd = iso(addDays(parse(x.due ?? today()), 1)); upsertTask({ id: x.id, due: nd }); toast(`Adiada para ${fmt(nd)}`) }
+          } } : {})}>
           <div className="tcard" draggable onDragStart={e => e.dataTransfer.setData('text', x.id)} onClick={() => editTask(x)}>
             <DoneToggle done={s === 'done'} color={proj(x.projectId)?.color} onToggle={() => { upsertTask({ id: x.id, status: s === 'done' ? 'todo' : 'done' }); if (s !== 'done') toast('Concluída ✓') }} />
             <div className="body">
@@ -48,6 +53,8 @@ export default function Board() {
             <div className="meta">
               {proj(x.projectId) && <span className="chip"><span className="dot" style={{ background: proj(x.projectId)!.color }} />{proj(x.projectId)!.name}</span>}
               <Due due={x.due} done={s === 'done'} />
+              {x.repeat && <span title="Repete">↻</span>}
+              {x.checklist?.length ? <span className="chip">☑ {x.checklist.filter(c => c.done).length}/{x.checklist.length}</span> : null}
               <span title={`Prioridade ${x.priority}`} style={{ color: PR[x.priority], fontWeight: 800 }}>{'▮'.repeat(x.priority === 'alta' ? 3 : x.priority === 'media' ? 2 : 1)}</span>
               {x.estimate ? <span className="mono" style={{ marginLeft: 'auto' }}>{x.estimate}h</span> : null}
             </div>

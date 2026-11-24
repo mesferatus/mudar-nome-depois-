@@ -113,7 +113,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const ref = useRef(data); ref.current = data
   const mut = (fn: (d: Data) => Data) => setData(d => { const n = { ...fn(d), updatedAt: new Date().toISOString() }; ref.current = n; return n })
   const snap = useRef<Data | null>(null)
-  const undoable = (msg: string) => { snap.current = ref.current; toast(msg, { label: 'Desfazer', run: () => { if (snap.current) { const s = snap.current; snap.current = null; setData(s); ref.current = s } } }) }
+  const keep = () => { snap.current = ref.current }
+  const undoable = (msg: string) => { toast(msg, { label: 'Desfazer', run: () => { if (snap.current) { const s = snap.current; snap.current = null; setData(s); ref.current = s } } }) }
 
   const api = useMemo<Omit<Ctx, 'data' | 'sync' | 'toasts'>>(() => ({
     setSync, toast,
@@ -133,26 +134,26 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       mut(d => ({ ...d, tasks: next ? [...upsert(d.tasks, res), next] : upsert(d.tasks, res) }))
       return res
     },
-    removeTask: (id) => { const t = ref.current.tasks.find(x => x.id === id); mut(d => ({ ...d, tasks: d.tasks.filter(x => x.id !== id) })); undoable(`"${t?.title ?? 'Tarefa'}" excluída`) },
+    removeTask: (id) => { const t = ref.current.tasks.find(x => x.id === id); keep(); mut(d => ({ ...d, tasks: d.tasks.filter(x => x.id !== id) })); undoable(`"${t?.title ?? 'Tarefa'}" excluída`) },
     upsertEvent: (e) => {
       const res = { title: 'Novo evento', date: iso(new Date()), start: '09:00', end: '10:00', ...ref.current.events.find(x => x.id === e.id), ...e, id: e.id ?? uid() } as CalEvent
       mut(d => ({ ...d, events: upsert(d.events, res) })); return res
     },
-    removeEvent: (id) => { mut(d => ({ ...d, events: d.events.filter(x => x.id !== id) })); undoable('Evento excluído') },
+    removeEvent: (id) => { keep(); mut(d => ({ ...d, events: d.events.filter(x => x.id !== id) })); undoable('Evento excluído') },
     upsertNote: (n) => {
       const res = { title: 'Sem título', body: '', folder: 'Geral', tags: [], ...ref.current.notes.find(x => x.id === n.id), ...n, id: n.id ?? uid(), updatedAt: new Date().toISOString() } as Note
       mut(d => ({ ...d, notes: upsert(d.notes, res) })); return res
     },
     removeNote: (id) => {
       const n = ref.current.notes.find(x => x.id === id)
-      mut(d => ({ ...d, notes: d.notes.filter(x => x.id !== id).map(x => x.parentId === id ? { ...x, parentId: n?.parentId } : x) }))
+      keep(); mut(d => ({ ...d, notes: d.notes.filter(x => x.id !== id).map(x => x.parentId === id ? { ...x, parentId: n?.parentId } : x) }))
       undoable(`"${n?.title ?? 'Página'}" excluída`)
     },
     upsertProject: (p) => {
       const res = { name: 'Projeto', color: '#8a8f98', ...ref.current.projects.find(x => x.id === p.id), ...p, id: p.id ?? uid() } as Project
       mut(d => ({ ...d, projects: upsert(d.projects, res) })); return res
     },
-    removeProject: (id) => { undoable('Projeto removido'); mut(d => ({ ...d, projects: d.projects.filter(x => x.id !== id), tasks: d.tasks.map(t => t.projectId === id ? { ...t, projectId: undefined } : t) })) },
+    removeProject: (id) => { keep(); undoable('Projeto removido'); mut(d => ({ ...d, projects: d.projects.filter(x => x.id !== id), tasks: d.tasks.map(t => t.projectId === id ? { ...t, projectId: undefined } : t) })) },
     setSettings: (s) => mut(d => ({ ...d, settings: { ...d.settings, ...s } })),
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [])

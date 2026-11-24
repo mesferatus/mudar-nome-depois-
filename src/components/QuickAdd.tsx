@@ -42,7 +42,7 @@ export function QuickAdd({ open, preset, close, more }: {
   const project = data.projects.find(x => x.id === fProj)
 
   const fields = () => k === 'task'
-    ? { title: p.title, due: fDate, start: iso(new Date()), projectId: fProj || undefined, priority: fPrio, estimate: p.estimate, tags: p.tags }
+    ? { title: p.title, due: fDate, start: iso(new Date()), projectId: fProj || undefined, priority: fPrio, estimate: p.estimate, tags: p.tags, repeat: p.repeat }
     : k === 'event' ? { title: p.title, date: fDate, start: fStart, end: fEnd, projectId: fProj }
       : { title: p.title, body: `# ${p.title}\n\n`, tags: p.tags, folder: project?.name ?? 'Geral' }
 
@@ -74,6 +74,7 @@ export function QuickAdd({ open, preset, close, more }: {
               {k === 'event' && <motion.span layout key="t" className="chip" initial={{ scale: .8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}>◷ {fStart}–{fEnd}</motion.span>}
               {project && <motion.span layout key="p" className="chip" initial={{ scale: .8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}><span className="dot" style={{ background: project.color }} />{project.name}</motion.span>}
               {k === 'task' && <motion.span layout key="r" className="chip" initial={{ scale: .8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}>{fPrio === 'alta' ? '▲ alta' : fPrio === 'baixa' ? '▽ baixa' : '◆ média'}</motion.span>}
+              {p.repeat && <motion.span layout key="rp" className="chip" initial={{ scale: .8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}>↻ {p.repeat === 'diaria' ? 'todo dia' : p.repeat === 'semanal' ? 'toda semana' : 'todo mês'}</motion.span>}
               {p.estimate && <motion.span layout key="e" className="chip" initial={{ scale: .8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}>{p.estimate}h</motion.span>}
               {p.tags.map(t => <motion.span layout key={'#' + t} className="chip" initial={{ scale: .8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}>#{t}</motion.span>)}
             </AnimatePresence>

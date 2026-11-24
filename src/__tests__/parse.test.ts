@@ -34,3 +34,11 @@ describe('parseQuick', () => {
     expect(parseQuick('Responder e-mails ~30min', P, NOW).estimate).toBe(0.5)
   })
 })
+
+describe('recorrência', () => {
+  it('toda segunda vira semanal com data na próxima segunda', () => {
+    expect(parseQuick('Reunião de status toda segunda', P, NOW)).toMatchObject({ repeat: 'semanal', date: '2026-11-30', title: 'Reunião de status' })
+  })
+  it('todo dia', () => { expect(parseQuick('Conferir OTIF todo dia', P, NOW)).toMatchObject({ repeat: 'diaria', title: 'Conferir OTIF' }) })
+  it('mensal', () => { expect(parseQuick('Fechamento mensal dia 30', P, NOW)).toMatchObject({ repeat: 'mensal', date: '2026-11-30' }) })
+})

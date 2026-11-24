@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, type ReactNode } from 'react'
-import { useStore } from '../lib/store'
+import { useStore, uid } from '../lib/store'
 import type { Task, CalEvent } from '../lib/types'
-import { STATUS_LABEL, PRIORITY_LABEL } from '../lib/types'
+import { STATUS_LABEL, PRIORITY_LABEL, REPEAT_LABEL, type Repeat } from '../lib/types'
 import { Btn, Icon, Modal } from './ui'
 import { today } from '../lib/date'
 import { QuickAdd } from './QuickAdd'
@@ -53,7 +53,19 @@ function TaskModal({ t, close }: { t: Partial<Task> | null; close: () => void })
       <div className="field"><label>Horas est.</label><input type="number" min={0} step={.5} className="input" value={f.estimate ?? ''} onChange={e => s({ estimate: e.target.value ? Number(e.target.value) : undefined })} /></div>
     </div>
     <div className="field"><label>Tags (separe por vírgula)</label><input className="input" value={(f.tags ?? []).join(', ')} onChange={e => s({ tags: e.target.value.split(',').map(x => x.trim()).filter(Boolean) })} /></div>
-    <div className="field"><label>Notas</label><textarea className="input" rows={3} value={f.notes ?? ''} onChange={e => s({ notes: e.target.value })} /></div>
+    <div className="field"><label>Repetir</label>
+      <div className="row wrap" style={{ gap: 6 }}>{([undefined, 'diaria', 'semanal', 'mensal'] as (Repeat | undefined)[]).map(r =>
+        <button key={r ?? 'none'} type="button" className={`chip ${f.repeat === r ? 'on' : ''}`} onClick={() => s({ repeat: r })}>{r ? REPEAT_LABEL[r] : 'Não repete'}</button>)}</div></div>
+    <div className="field"><label>Checklist {f.checklist?.length ? `· ${f.checklist.filter(c => c.done).length}/${f.checklist.length}` : ''}</label>
+      <div className="checklist">
+        {(f.checklist ?? []).map(c => <div key={c.id} className="ck">
+          <input type="checkbox" checked={c.done} onChange={e => s({ checklist: f.checklist!.map(x => x.id === c.id ? { ...x, done: e.target.checked } : x) })} />
+          <input className="ck-t" value={c.text} onChange={e => s({ checklist: f.checklist!.map(x => x.id === c.id ? { ...x, text: e.target.value } : x) })} />
+          <button type="button" className="btn ghost sm icon" onClick={() => s({ checklist: f.checklist!.filter(x => x.id !== c.id) })} aria-label="Remover item"><Icon n="x" s={14} /></button>
+        </div>)}
+        <input className="input" placeholder="+ Adicionar item (Enter)" onKeyDown={e => { const v = e.currentTarget.value.trim(); if (e.key === 'Enter' && v) { e.preventDefault(); s({ checklist: [...(f.checklist ?? []), { id: uid(), text: v, done: false }] }); e.currentTarget.value = '' } }} />
+      </div></div>
+    <div className="field"><label>Notas</label><textarea className="input" rows={2} value={f.notes ?? ''} onChange={e => s({ notes: e.target.value })} /></div>
   </Modal>
 }
 

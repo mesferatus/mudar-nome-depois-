@@ -21,13 +21,21 @@ Use **Microsoft Edge** ou **Google Chrome** (necessário para gravar direto em a
 | **Calendário** | Visão Mês (estilo planilha) ou Semana (horários, estilo Outlook). Mês: calendário mensal com cara de planilha. Arraste entregas/eventos entre dias, duplo clique cria evento, exporta `.xlsx` |
 | **Agenda** | Semana por horário (estilo Outlook), linha do "agora", clique para criar, arraste para mover |
 | **Entregas** | Quadro (A fazer → Em andamento → Revisão → Concluído) e visão em lista, filtros por projeto |
-| **Notas** | Markdown, pastas, `#tags`, `[[links]]` entre páginas, backlinks, checklists clicáveis, notas fixadas |
+| **Notas** | Caderno estilo Notion: páginas dentro de páginas, ícones, capas fofas, editor em blocos (digite **/**), atalhos de Markdown, alternâncias, destaques, código, arrastar blocos, modelos (ata, projeto, diário, BI, estudos), favoritos e backlinks |
 | **Rotinas** | Assistentes locais: *Vigia de prazos*, *Planejador de foco* (cria blocos na agenda), *Relatório semanal* (status report pronto pro gestor), *Faxina* |
-| **Ajustes** | 5 temas (Café, Vinho, Oliva, Noite, Creme), projetos, nuvem, Excel, backup |
+| **Ajustes** | 8 temas (Café, Vinho, Oliva, Noite, Creme e os fofos Morango 🍓, Nuvem ☁️, Jardim 🌸 com desenhos), projetos, nuvem, Excel, backup |
 
 **Criação rápida:** botão **+ Novo** (ou tecla `N`). Escreva natural: *"Reunião com fornecedor amanhã 14h #bi"*, *"Entregar dashboard sexta !alta ~4h"*, *"nota: ideias de estoque"* — o app entende data, horário, `#projeto`, `!prioridade` e `~horas`.
 
 Atalhos: `Ctrl+K` paleta de comandos · `Alt+1…7` trocar de aba · `N` nova tarefa.
+
+## Mais
+
+- **Tarefas recorrentes** (todo dia / semana / mês — também por texto: *"Daily toda segunda"*) e **checklist** dentro da tarefa
+- **Desfazer** ao excluir · **boas-vindas** na primeira vez
+- **Celular:** deslize a tarefa → conclui, ← adia 1 dia; calendário com pontinhos; semana em lista
+- **Outlook:** Ajustes → Integrações → importar `.ics`
+- **Lembretes:** notificação 10 min antes dos eventos e resumo das entregas do dia
 
 ## Instalar como app
 
