@@ -296,3 +296,100 @@ textarea.input { height: auto; padding: 12px 16px; resize: vertical; border-radi
 /* faixa listrada no topo de cada página */
 .main::before { content: ''; display: block; height: 14px; position: sticky; top: 0; z-index: 5; background: repeating-linear-gradient(90deg, var(--wine) 0 12px, var(--bg) 12px 24px); border-bottom: 1.5px solid var(--line); }
 .notes { height: calc(100% - 14px); }
+
+/* =====================================================================
+   Respiro & legibilidade (v3) — sobrescreve as regras acima
+   ===================================================================== */
+body { font-size: 15px; line-height: 1.6; }
+.app { grid-template-columns: 272px 1fr; }
+
+/* barra lateral: itens maiores, caixa normal */
+.side { padding: 28px 18px 18px; gap: 6px; }
+.brand { padding: 8px 12px 30px; }
+.nav { padding: 11px 16px; font-size: 14px; font-weight: 500; text-transform: none; letter-spacing: 0; gap: 12px; }
+.nav kbd { font-size: 11px; }
+.side-sec { padding: 26px 16px 8px; font-size: 22px; }
+.side-foot { padding: 16px; font-size: 12px; }
+
+/* página e cabeçalho: título numa linha, ações na linha de baixo */
+.page { padding: 48px 64px 96px; max-width: 1360px; }
+.head { gap: 12px 12px; margin-bottom: 40px; padding-bottom: 28px; align-items: center; }
+.head > div:first-child { flex: 1 1 100%; }
+.head .sp { display: none; }
+.kicker { font-size: 12px; letter-spacing: .14em; margin-bottom: 10px; }
+.head h1 { font-size: 60px; }
+.head p { font-size: 16px; margin-top: 14px; }
+.stamp { order: 99; margin-left: auto; }
+
+/* botões e campos: alvos maiores, texto legível */
+.btn { height: 42px; padding: 0 20px; font-size: 13px; letter-spacing: .04em; text-transform: none; font-weight: 600; gap: 9px; }
+.btn.sm { height: 36px; padding: 0 16px; font-size: 13px; }
+.btn.icon { width: 42px; }
+.btn.primary::after { font-size: 10px; }
+.seg { padding: 4px; } .seg button { padding: 8px 18px; font-size: 13px; letter-spacing: .02em; text-transform: none; font-weight: 600; }
+.input, .select { height: 42px; font-size: 14px; }
+.field { gap: 8px; } .field label { font-size: 12px; letter-spacing: .08em; }
+.chip { font-size: 11px; padding: 3px 10px; letter-spacing: .04em; }
+
+/* cartões e grids com mais ar */
+.grid { gap: 28px; }
+.card-h { padding: 24px 28px 0; font-size: 26px; }
+.card-h small { font-size: 12px; letter-spacing: .08em; }
+.card-b { padding: 20px 28px 28px; }
+.kpi .card-b { padding: 22px 24px 24px; }
+.kpi .l { font-size: 12px; letter-spacing: .12em; }
+.kpi .v { font-size: 54px; margin-top: 12px; }
+.kpi .s { font-size: 18px; }
+.kpis { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.dash-2 { grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); margin-top: 28px; }
+.dash-3 { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); margin-top: 28px; }
+.list-row { padding: 14px 0; font-size: 14px; gap: 12px; }
+
+/* planner */
+.xl th { padding: 14px 16px; font-size: 12px; letter-spacing: .14em; }
+.xl td { height: 140px; }
+.xl .n { padding: 10px 12px 6px; }
+.xl .n > span:first-child { font-size: 22px; }
+.xl .it { margin: 4px 10px; padding: 4px 12px; font-size: 12px; }
+
+/* agenda */
+.week .hour, .week .tlabel { height: 56px; }
+.week .hcol { padding: 16px 8px 14px; font-size: 12px; letter-spacing: .1em; }
+.ev { padding: 8px 10px; }
+
+/* quadro */
+.board { gap: 28px; padding-top: 22px; }
+.col { padding: 18px; }
+.col-h { font-size: 22px; padding: 0 4px 16px; }
+.tcard { padding: 16px 18px; margin-bottom: 14px; }
+.tcard .t { font-size: 15px; margin-bottom: 12px; }
+.tcard .meta { gap: 8px; }
+
+/* notas */
+.notes { grid-template-columns: 300px 1fr; }
+.nlist { padding: 28px 18px; }
+.nitem { padding: 12px 14px; margin-bottom: 4px; }
+.neditor { padding: 56px 96px 80px; }
+.neditor::before { left: 56px; }
+
+/* modais e rotinas */
+.modal { width: min(640px, 94vw); }
+.modal-h { padding: 28px 32px 8px; font-size: 32px; }
+.modal-b { padding: 16px 32px; gap: 18px; }
+.modal-f { padding: 20px 32px 28px; gap: 10px; }
+.agent { gap: 18px; }
+.out { padding: 16px 18px; font-size: 14px; line-height: 1.7; }
+.themes { gap: 18px; }
+
+@media (max-width: 1100px) { .page { padding: 36px 32px 80px; } .neditor { padding: 40px 48px; } .board { grid-template-columns: repeat(2, minmax(240px, 1fr)); } }
+@media (max-width: 900px) { .page { padding: 24px 16px 60px; } .head h1 { font-size: 42px; } .dash-2, .dash-3 { grid-template-columns: 1fr; } .board { grid-template-columns: 1fr; } }
+.app { grid-template-columns: 256px 1fr; }
+.page { padding: 48px 56px 96px; }
+.kpis { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px; }
+.kpi .v { font-size: 48px; }
+.board { gap: 20px; }
+.col-h { gap: 10px; min-width: 0; }
+.col-h .btn { flex: none; }
+.col { padding: 16px; }
+.agent .ic { -webkit-mask: none; mask: none; border-radius: 4px; outline: 2px dashed var(--line); outline-offset: -6px; }
+.routines-grid { align-items: start; }

@@ -45,14 +45,14 @@ export default function Dashboard() {
       ].map((k, i) => <Card key={k.l} delay={i * .04} className="kpi"><div className="l">{k.l}</div><div className="v" style={{ color: k.c }}>{k.v}</div><div className="s">{k.s}</div></Card>)}
     </div>
 
-    <div className="grid" style={{ gridTemplateColumns: '1.3fr 1fr', marginTop: 16 }}>
+    <div className="grid dash-2">
       <Card title="Entregas por semana" sub="concluídas × no prazo" delay={.1}><Bars data={m.weeks.map(w => ({ label: w.label, a: w.onTime, b: w.done }))} /></Card>
       <Card title="Status" sub={`${data.tasks.length} tarefas`} delay={.14}>
         <Donut parts={m.byStatus.map(s => ({ v: s.n, c: COLORS[s.status], l: STATUS_LABEL[s.status] }))} label={`${data.tasks.length ? Math.round((m.done / data.tasks.length) * 100) : 0}%`} sub="concluído" />
       </Card>
     </div>
 
-    <div className="grid" style={{ gridTemplateColumns: '1fr 1fr 1fr', marginTop: 16 }}>
+    <div className="grid dash-3">
       <Card title="Hoje" sub={`${todayEvents.length} compromissos`} delay={.18}>
         {todayEvents.length === 0 && <div className="muted">Agenda livre. Bom momento para foco.</div>}
         {todayEvents.map(e => <div key={e.id} className="list-row" style={{ cursor: 'pointer' }} onClick={() => editEvent(e)}>
@@ -73,7 +73,7 @@ export default function Dashboard() {
       </Card>
     </div>
 
-    <div className="grid" style={{ gridTemplateColumns: '1.3fr 1fr', marginTop: 16 }}>
+    <div className="grid dash-2">
       <Card title="Burndown · 14 dias" sub={`${burn.total}h em aberto com prazo`} delay={.3}><Burndown points={burn.pts} /></Card>
       <Card title="Carga da semana" sub="horas em reuniões · entregas" delay={.34}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 8, alignItems: 'end', height: 150 }}>
