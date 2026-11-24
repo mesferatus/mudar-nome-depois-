@@ -25,3 +25,12 @@ describe('banco de dados dentro da página', () => {
     expect(blocksToMd(b)).toBe('Texto\n@banco(abc123)\nFim')
   })
 })
+
+describe('imagem', () => {
+  it('ida e volta com legenda e link', () => {
+    const md = '![Fluxo de doca](https://exemplo.com/a.png)'
+    expect(mdToBlocks(md)[0]).toMatchObject({ type: 'image', text: 'https://exemplo.com/a.png', body: 'Fluxo de doca' })
+    expect(blocksToMd(mdToBlocks(md))).toBe(md)
+  })
+  it('imagem enviada (data URL)', () => { expect(mdToBlocks('![](data:image/png;base64,AAAA)')[0].type).toBe('image') })
+})

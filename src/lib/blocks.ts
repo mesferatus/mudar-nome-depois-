@@ -27,7 +27,9 @@ export function mdToBlocks(md: string): Block[] {
       i++
       while (i < lines.length && lines[i] !== '</details>') body.push(lines[i++])
       out.push({ id: bid(), type: 'toggle', text: m[2], open: !!m[1], body: body.join('\n') })
-    } else if ((m = l.match(/^### (.*)/))) out.push({ id: bid(), type: 'h3', text: m[1] })
+    } else if ((m = l.match(/^!\[([^\]]*)\]\((.+)\)$/))) out.push({ id: bid(), type: 'image', text: m[2], body: m[1] })
+    else if ((m = l.match(/^@banco\(([\w-]+)\)$/))) out.push({ id: bid(), type: 'dbview', text: m[1] })
+    else if ((m = l.match(/^### (.*)/))) out.push({ id: bid(), type: 'h3', text: m[1] })
     else if ((m = l.match(/^## (.*)/))) out.push({ id: bid(), type: 'h2', text: m[1] })
     else if ((m = l.match(/^# (.*)/))) out.push({ id: bid(), type: 'h1', text: m[1] })
     else if ((m = l.match(/^\s*- \[( |x)\] ?(.*)/))) out.push({ id: bid(), type: 'todo', text: m[2], checked: m[1] === 'x' })
