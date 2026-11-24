@@ -4,18 +4,25 @@ import type { Task, CalEvent } from '../lib/types'
 import { STATUS_LABEL, PRIORITY_LABEL } from '../lib/types'
 import { Btn, Icon, Modal } from './ui'
 import { today } from '../lib/date'
+import { QuickAdd } from './QuickAdd'
+import type { Kind } from '../lib/parse'
 
-type Ed = { editTask: (t?: Partial<Task>) => void; editEvent: (e?: Partial<CalEvent>) => void }
+type Ed = { editTask: (t?: Partial<Task>) => void; editEvent: (e?: Partial<CalEvent>) => void; quick: (p?: { kind?: Kind; date?: string }) => void }
 const C = createContext<Ed>(null!)
 export const useEditors = () => useContext(C)
 
 export function EditorsProvider({ children }: { children: ReactNode }) {
   const [task, setTask] = useState<Partial<Task> | null>(null)
   const [ev, setEv] = useState<Partial<CalEvent> | null>(null)
-  return <C.Provider value={{ editTask: t => setTask(t ?? { due: today(), start: today() }), editEvent: e => setEv(e ?? { date: today(), start: '09:00', end: '10:00' }) }}>
+  const [q, setQ] = useState<{ open: boolean; preset?: { kind?: Kind; date?: string } }>({ open: false })
+  const { upsertNote } = useStore()
+  return <C.Provider value={{ editTask: t => setTask(t ?? { due: today(), start: today() }), editEvent: e => setEv(e ?? { date: today(), start: '09:00', end: '10:00' }), quick: preset => setQ({ open: true, preset }) }}>
     {children}
     <TaskModal t={task} close={() => setTask(null)} />
     <EventModal e={ev} close={() => setEv(null)} />
+    <QuickAdd open={q.open} preset={q.preset} close={() => setQ({ open: false })} more={(k, f) => {
+      if (k === 'task') setTask(f as Partial<Task>); else if (k === 'event') setEv(f as Partial<CalEvent>); else upsertNote(f)
+    }} />
   </C.Provider>
 }
 

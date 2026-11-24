@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { StoreProvider, useStore } from './lib/store'
 import { EditorsProvider, useEditors } from './components/editors'
 import { Icon, spring } from './components/ui'
+import { Logo } from './components/Logo'
 import Dashboard from './views/Dashboard'
 import Planner from './views/Planner'
 import Agenda from './views/Agenda'
@@ -12,22 +13,23 @@ import Routines from './views/Routines'
 import Settings, { THEMES } from './views/Settings'
 
 const NAV = [
-  { id: 'painel', l: 'Painel', i: 'home', k: '1', C: Dashboard },
-  { id: 'planner', l: 'Planner', i: 'grid', k: '2', C: Planner },
-  { id: 'agenda', l: 'Agenda', i: 'cal', k: '3', C: Agenda },
-  { id: 'entregas', l: 'Entregas', i: 'board', k: '4', C: Board },
-  { id: 'notas', l: 'Notas', i: 'note', k: '5', C: Notes },
-  { id: 'rotinas', l: 'Rotinas', i: 'bolt', k: '6', C: Routines },
-  { id: 'ajustes', l: 'Ajustes', i: 'gear', k: '7', C: Settings },
+  { id: 'painel', l: 'Painel', i: 'home', k: '1', C: Dashboard, mob: true },
+  { id: 'planner', l: 'Planner', i: 'grid', k: '2', C: Planner, mob: true },
+  { id: 'agenda', l: 'Agenda', i: 'cal', k: '3', C: Agenda, mob: true },
+  { id: 'entregas', l: 'Entregas', i: 'board', k: '4', C: Board, mob: true },
+  { id: 'notas', l: 'Notas', i: 'note', k: '5', C: Notes, mob: true },
+  { id: 'rotinas', l: 'Rotinas', i: 'bolt', k: '6', C: Routines, mob: false },
+  { id: 'ajustes', l: 'Ajustes', i: 'gear', k: '7', C: Settings, mob: false },
 ]
 
 function Palette({ open, close, go }: { open: boolean; close: () => void; go: (v: string) => void }) {
-  const { data, setSettings } = useStore(); const { editTask, editEvent } = useEditors()
+  const { data, setSettings } = useStore(); const { editTask, editEvent, quick } = useEditors()
   const [q, setQ] = useState(''), [i, setI] = useState(0)
   const opts = useMemo(() => {
     const base = [
-      { l: 'Nova tarefa', h: 'ação', run: () => editTask() },
-      { l: 'Novo evento', h: 'ação', run: () => editEvent() },
+      { l: 'Nova tarefa', h: 'ação', run: () => quick({ kind: 'task' }) },
+      { l: 'Novo evento', h: 'ação', run: () => quick({ kind: 'event' }) },
+      { l: 'Nova nota', h: 'ação', run: () => quick({ kind: 'note' }) },
       ...NAV.map(n => ({ l: `Ir para ${n.l}`, h: `Alt+${n.k}`, run: () => go(n.id) })),
       ...THEMES.map(t => ({ l: `Tema: ${t.name}`, h: 'tema', run: () => setSettings({ theme: t.id }) })),
       ...data.tasks.map(t => ({ l: t.title, h: 'tarefa', run: () => editTask(t) })),
@@ -36,7 +38,7 @@ function Palette({ open, close, go }: { open: boolean; close: () => void; go: (v
     ]
     const s = q.toLowerCase()
     return base.filter(o => o.l.toLowerCase().includes(s)).slice(0, 9)
-  }, [q, data, editTask, editEvent, go, setSettings])
+  }, [q, data, editTask, editEvent, quick, go, setSettings])
   useEffect(() => { if (open) { setQ(''); setI(0) } }, [open])
   const pick = (k: number) => { opts[k]?.run(); close() }
   return <AnimatePresence>{open && <motion.div className="overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onMouseDown={close}>
@@ -49,42 +51,52 @@ function Palette({ open, close, go }: { open: boolean; close: () => void; go: (v
 }
 
 function Shell() {
-  const { data, sync, toasts } = useStore(); const { editTask } = useEditors()
+  const { data, sync, toasts } = useStore(); const { quick } = useEditors()
   const [view, setView] = useState(() => localStorage.getItem('kairotec:view') ?? 'painel')
   const [pal, setPal] = useState(false)
-  useEffect(() => { localStorage.setItem('kairotec:view', view) }, [view])
+  useEffect(() => { try { localStorage.setItem('kairotec:view', view) } catch { /* ignore */ } }, [view])
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); setPal(p => !p) }
       if (e.altKey && /^[1-7]$/.test(e.key)) { e.preventDefault(); setView(NAV[Number(e.key) - 1].id) }
       const tag = (e.target as HTMLElement).tagName
-      if (e.key === 'n' && !e.ctrlKey && !e.metaKey && !['INPUT', 'TEXTAREA', 'SELECT'].includes(tag)) { e.preventDefault(); editTask() }
+      if (e.key === 'n' && !e.ctrlKey && !e.metaKey && !e.altKey && !['INPUT', 'TEXTAREA', 'SELECT'].includes(tag)) { e.preventDefault(); quick() }
     }
     window.addEventListener('keydown', h); return () => window.removeEventListener('keydown', h)
-  }, [editTask])
-  const Cur = NAV.find(n => n.id === view)?.C ?? Dashboard
+  }, [quick])
+  const cur = NAV.find(n => n.id === view) ?? NAV[0]
+  const Cur = cur.C
   const overdue = data.tasks.filter(t => t.status !== 'done' && t.due && t.due < new Date().toISOString().slice(0, 10)).length
+  const hello = (() => { const h = new Date().getHours(); return h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite' })()
 
   return <div className="app">
-    <aside className="side">
-      <div className="brand"><div className="brand-mark">K</div>Kairotec</div>
-      <button className="nav search" onClick={() => setPal(true)} style={{ border: '1px solid var(--line)', marginBottom: 10 }}><Icon n="search" /><span>Buscar</span><kbd>Ctrl K</kbd></button>
-      {NAV.map(n => <motion.button whileTap={{ scale: .97 }} key={n.id} className={`nav ${view === n.id ? 'on' : ''}`} onClick={() => setView(n.id)}>
+    <header className="topbar">
+      <Logo size={44} />
+      <div className="t"><b>kairotec<span style={{ color: 'var(--accent)' }}>.</span></b><span>{hello} · {new Date().toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' })}</span></div>
+      <motion.button whileTap={{ scale: .9 }} className="btn icon" aria-label="Rotinas" onClick={() => setView('rotinas')}><Icon n="bolt" /></motion.button>
+      <motion.button whileTap={{ scale: .9 }} className="btn icon" aria-label="Ajustes" onClick={() => setView('ajustes')}><Icon n="gear" /></motion.button>
+    </header>
+    <nav className="side">
+      <div className="brand"><Logo size={34} /><b>kairotec<i>.</i></b></div>
+      <button className="nav search" onClick={() => setPal(true)}><span className="ico"><Icon n="search" /></span><span className="lbl">Buscar</span><kbd>Ctrl K</kbd></button>
+      {NAV.map(n => <motion.button whileTap={{ scale: .94 }} key={n.id} className={`nav ${view === n.id ? 'on' : ''} ${n.mob ? '' : 'more'}`} onClick={() => setView(n.id)} aria-label={n.l}>
         {view === n.id && <motion.div layoutId="navpill" className="nav-pill" transition={spring} />}
-        <Icon n={n.i} /><span>{n.l}</span>
-        {n.id === 'entregas' && overdue > 0 ? <span className="chip" style={{ marginLeft: 'auto', color: 'var(--bad)' }}>{overdue}</span> : <kbd>Alt {n.k}</kbd>}
+        <span className="ico"><Icon n={n.i} s={18} /></span><span className="lbl">{n.l}</span>
+        {n.id === 'entregas' && overdue > 0 ? <span className="chip" style={{ color: 'var(--bad)' }}>{overdue}</span> : <kbd>Alt {n.k}</kbd>}
       </motion.button>)}
       <div className="side-sec">Projetos</div>
-      {data.projects.map(p => <div key={p.id} className="nav proj" style={{ cursor: 'default', fontWeight: 500 }}><span className="dot" style={{ background: p.color }} /><span>{p.name}</span><kbd>{data.tasks.filter(t => t.projectId === p.id && t.status !== 'done').length}</kbd></div>)}
+      {data.projects.map(p => <div key={p.id} className="nav proj"><span className="dot" style={{ background: p.color }} /><span>{p.name}</span><kbd>{data.tasks.filter(t => t.projectId === p.id && t.status !== 'done').length}</kbd></div>)}
       <div className="side-foot" title={sync.error}>
         <motion.span className="dot" animate={{ scale: sync.status === 'saving' ? [1, 1.5, 1] : 1 }} transition={{ repeat: sync.status === 'saving' ? Infinity : 0, duration: .8 }}
           style={{ background: sync.status === 'error' ? 'var(--bad)' : sync.cloudName || sync.excelName ? 'var(--ok)' : 'var(--faint)' }} />
         {sync.status === 'error' ? 'Erro ao sincronizar' : sync.cloudName || sync.excelName ? (sync.lastSaved ? `Sincronizado ${sync.lastSaved}` : 'Conectado') : 'Só neste navegador'}
       </div>
-    </aside>
+    </nav>
     <main className="main"><AnimatePresence mode="wait"><motion.div key={view} style={{ height: view === 'notas' ? '100%' : undefined }}><Cur /></motion.div></AnimatePresence></main>
+    {!['ajustes', 'notas'].includes(view) && <motion.button className="fab" onClick={() => quick({ kind: view === 'agenda' ? 'event' : 'task' })} initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} whileHover={{ y: -2 }} whileTap={{ scale: .92 }} transition={spring} aria-label="Novo">
+      <Icon n="plus" s={20} /> Novo</motion.button>}
     <Palette open={pal} close={() => setPal(false)} go={setView} />
-    <div className="toasts"><AnimatePresence>{toasts.map(t => <motion.div key={t.id} className="toast" layout initial={{ opacity: 0, y: 20, scale: .9 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, x: 40 }} transition={spring}>{t.msg}</motion.div>)}</AnimatePresence></div>
+    <div className="toasts"><AnimatePresence>{toasts.map(t => <motion.div key={t.id} className="toast" layout initial={{ opacity: 0, y: 20, scale: .9 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 10, scale: .95 }} transition={spring}>{t.msg}</motion.div>)}</AnimatePresence></div>
   </div>
 }
 

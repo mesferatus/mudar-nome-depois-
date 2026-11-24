@@ -8,7 +8,7 @@ import { buildWorkbook } from '../lib/excel'
 import { download } from '../lib/sync'
 
 export default function Planner() {
-  const { data, upsertTask, upsertEvent, toast } = useStore(); const { editTask, editEvent } = useEditors()
+  const { data, upsertTask, upsertEvent, toast } = useStore(); const { editTask, editEvent, quick } = useEditors()
   const [cur, setCur] = useState(() => { const d = new Date(); return { y: d.getFullYear(), m: d.getMonth() } })
   const [show, setShow] = useState<'tudo' | 'tarefas' | 'eventos'>('tudo')
   const [drop, setDrop] = useState<string>()
@@ -50,9 +50,9 @@ export default function Planner() {
             const items = evs.length + tks.length
             return <td key={ds} className={`${out ? 'out' : ''} ${we ? 'we' : ''} ${drop === ds ? 'drop' : ''}`}
               onDragOver={e => { e.preventDefault(); setDrop(ds) }} onDragLeave={() => setDrop(undefined)} onDrop={e => onDrop(ds, e)}
-              onDoubleClick={() => editEvent({ date: ds, start: '09:00', end: '10:00' })}><div className="cellwrap">
+              onDoubleClick={() => quick({ kind: 'event', date: ds })}><div className="cellwrap">
               <div className="n"><span className={ds === t ? 'today' : ''}>{day.getDate()}</span>
-                <span className="row" style={{ gap: 2 }}><button className="cellbtn" title="Nova entrega" onClick={() => editTask({ due: ds, start: ds })}>◆</button><button className="cellbtn" title="Novo evento" onClick={() => editEvent({ date: ds, start: '09:00', end: '10:00' })}>+</button></span></div>
+                <span className="row" style={{ gap: 2 }}><button className="cellbtn" title="Nova entrega" onClick={() => quick({ kind: 'task', date: ds })}>◆</button><button className="cellbtn" title="Novo evento" onClick={() => quick({ kind: 'event', date: ds })}>+</button></span></div>
               {evs.slice(0, 2).map(e => <div key={e.id} className="it" draggable onDragStart={ev => ev.dataTransfer.setData('text', `e:${e.id}`)}
                 style={{ borderColor: proj(e.projectId)?.color ?? 'var(--accent)' }} onClick={() => editEvent(e)}><span className="mono">{e.start}</span> {e.title}</div>)}
               {tks.slice(0, 2).map(x => <div key={x.id} className="it" draggable onDragStart={ev => ev.dataTransfer.setData('text', `t:${x.id}`)}

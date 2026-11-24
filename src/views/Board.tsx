@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../lib/store'
-import { Page, Btn, Icon, Seg, spring } from '../components/ui'
+import { Page, Icon, Seg, spring } from '../components/ui'
 import { useEditors } from '../components/editors'
 import type { Status } from '../lib/types'
 import { STATUS_LABEL } from '../lib/types'
@@ -12,7 +12,7 @@ const CC: Record<Status, string> = { todo: 'var(--faint)', doing: 'var(--info)',
 const PR = { alta: 'var(--bad)', media: 'var(--warn)', baixa: 'var(--muted)' }
 
 export default function Board() {
-  const { data, upsertTask } = useStore(); const { editTask } = useEditors()
+  const { data, upsertTask } = useStore(); const { editTask, quick } = useEditors()
   const [over, setOver] = useState<Status>()
   const [pf, setPf] = useState<string>('all')
   const [view, setView] = useState<'quadro' | 'lista'>('quadro')
@@ -32,14 +32,14 @@ export default function Board() {
       <input className="input" placeholder="Filtrar…" value={q} onChange={e => setQ(e.target.value)} style={{ width: 180 }} />
       <select className="input" value={pf} onChange={e => setPf(e.target.value)} style={{ width: 170 }}><option value="all">Todos os projetos</option>{data.projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select>
       <Seg value={view} onChange={setView} options={[{ v: 'quadro', l: 'Quadro' }, { v: 'lista', l: 'Lista' }]} />
-      <Btn variant="primary" onClick={() => editTask({ projectId: pf === 'all' ? undefined : pf, start: t })}><Icon n="plus" /> Tarefa</Btn></div>
+      </div>
 
     <div className="fill">{view === 'quadro' ? <div className="board">{COLS.map(s => {
       const items = tasks.filter(x => x.status === s).sort((a, b) => (a.due ?? '9').localeCompare(b.due ?? '9'))
       return <div key={s} className={`col ${over === s ? 'drop' : ''}`} onDragOver={e => { e.preventDefault(); setOver(s) }} onDragLeave={() => setOver(undefined)}
         onDrop={e => { setOver(undefined); upsertTask({ id: e.dataTransfer.getData('text'), status: s }) }}>
         <div className="col-h"><span className="dot" style={{ background: CC[s] }} />{STATUS_LABEL[s]}<span className="muted" style={{ fontWeight: 500 }}>{items.length}</span>
-          <button className="btn ghost sm" style={{ marginLeft: 'auto' }} onClick={() => editTask({ status: s, start: t })}><Icon n="plus" s={14} /></button></div>
+          <button className="btn ghost sm" style={{ marginLeft: 'auto' }} onClick={() => s === 'todo' ? quick({ kind: 'task' }) : editTask({ status: s, start: t })}><Icon n="plus" s={14} /></button></div>
         <div className="scroll"><AnimatePresence initial={false}>{items.map(x => <motion.div key={x.id} layout layoutId={x.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: .96 }} transition={spring}>
           <div className="tcard" draggable onDragStart={e => e.dataTransfer.setData('text', x.id)} onClick={() => editTask(x)}>
             <div className="t" style={{ textDecoration: s === 'done' ? 'line-through' : undefined, opacity: s === 'done' ? .65 : 1 }}>{x.title}</div>

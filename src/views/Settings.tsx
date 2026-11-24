@@ -5,11 +5,11 @@ import { buildWorkbook } from '../lib/excel'
 import type { Data } from '../lib/types'
 
 export const THEMES = [
-  { id: 'claro', name: 'Claro', c: ['#f7f7f5', '#ffffff', '#2b2b2b'] },
-  { id: 'grafite', name: 'Grafite', c: ['#111214', '#1c1d21', '#d9c7a3'] },
-  { id: 'rose', name: 'Rosé', c: ['#faf6f4', '#ffffff', '#7a2236'] },
-  { id: 'celeste', name: 'Celeste', c: ['#f3f7f9', '#ffffff', '#2f5d7c'] },
-  { id: 'floresta', name: 'Floresta', c: ['#0f1512', '#18221d', '#9fd3a9'] },
+  { id: 'cafe', name: 'Café', c: ['#0b0806', '#3d2a1c', '#f1dabf'] },
+  { id: 'vinho', name: 'Vinho', c: ['#0a0708', '#5a1525', '#e2b46a'] },
+  { id: 'oliva', name: 'Oliva', c: ['#080a07', '#2d3a1f', '#d8e3a5'] },
+  { id: 'noite', name: 'Noite', c: ['#07080d', '#252d5e', '#b8c2ff'] },
+  { id: 'creme', name: 'Creme', c: ['#f6efe6', '#fffbff', '#362417'] },
 ]
 
 export default function Settings() {

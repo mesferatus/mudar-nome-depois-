@@ -23,7 +23,9 @@ Use **Microsoft Edge** ou **Google Chrome** (necessário para gravar direto em a
 | **Entregas** | Quadro (A fazer → Em andamento → Revisão → Concluído) e visão em lista, filtros por projeto |
 | **Notas** | Markdown, pastas, `#tags`, `[[links]]` entre páginas, backlinks, checklists clicáveis, notas fixadas |
 | **Rotinas** | Assistentes locais: *Vigia de prazos*, *Planejador de foco* (cria blocos na agenda), *Relatório semanal* (status report pronto pro gestor), *Faxina* |
-| **Ajustes** | 5 temas (Claro, Grafite, Rosé, Celeste, Floresta), projetos, nuvem, Excel, backup |
+| **Ajustes** | 5 temas (Café, Vinho, Oliva, Noite, Creme), projetos, nuvem, Excel, backup |
+
+**Criação rápida:** botão **+ Novo** (ou tecla `N`). Escreva natural: *"Reunião com fornecedor amanhã 14h #bi"*, *"Entregar dashboard sexta !alta ~4h"*, *"nota: ideias de estoque"* — o app entende data, horário, `#projeto`, `!prioridade` e `~horas`.
 
 Atalhos: `Ctrl+K` paleta de comandos · `Alt+1…7` trocar de aba · `N` nova tarefa.
 
@@ -37,6 +39,14 @@ Em **Ajustes → Nuvem & Excel**:
 > Se a planilha estiver aberta no Excel, o Windows bloqueia a gravação — o app avisa e atualiza na próxima alteração.
 
 Os dados também ficam no navegador (localStorage) como cópia local.
+
+## Testes
+
+```bash
+npm run check   # tipos + lint + testes + build (o mesmo que o CI roda)
+```
+
+Próximos passos e plano da IA: veja [ROADMAP.md](ROADMAP.md).
 
 ## Estrutura
 

@@ -2,16 +2,16 @@ import { useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { useStore } from '../lib/store'
 import { metrics } from '../lib/metrics'
-import { Card, Page, Btn, Icon } from '../components/ui'
+import { Card, Page, Icon } from '../components/ui'
 import { Donut, Bars, Burndown } from '../components/charts'
 import { useEditors } from '../components/editors'
-import { WD, fmt, today, addDays, iso, daysBetween } from '../lib/date'
+import { fmt, today, addDays, iso, daysBetween } from '../lib/date'
 import { STATUS_LABEL } from '../lib/types'
 
 const hello = () => { const h = new Date().getHours(); return h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite' }
 
 export default function Dashboard() {
-  const { data } = useStore(); const { editTask, editEvent } = useEditors()
+  const { data } = useStore(); const { editTask, editEvent, quick } = useEditors()
   const m = useMemo(() => metrics(data), [data])
   const t = today()
   const todayEvents = data.events.filter(e => e.date === t).sort((a, b) => a.start.localeCompare(b.start))
@@ -29,20 +29,32 @@ export default function Dashboard() {
     return { pts, total }
   }, [data])
 
-  const COLORS = { todo: 'var(--faint)', doing: 'var(--info)', review: 'var(--warn)', done: 'var(--ok)' }
+  const COLORS = { todo: 'var(--c3)', doing: 'var(--c4)', review: 'var(--c2)', done: 'var(--c1)' }
   return <Page>
-    <div className="head"><div><h1>{hello()}{data.settings.userName ? `, ${data.settings.userName}` : ''}.</h1>
-      <p>{WD[new Date().getDay()]}, {new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' })} · {m.overdue ? `${m.overdue} entrega(s) atrasada(s)` : 'tudo dentro do prazo'}</p></div>
-      <div className="sp" /><Btn onClick={() => editEvent()}><Icon n="cal" /> Evento</Btn><Btn variant="primary" onClick={() => editTask()}><Icon n="plus" /> Tarefa</Btn></div>
-
-    <div className="grid kpis">
-      {[
-        { l: 'Ativas', v: m.open, s: `${m.openHours}h estimadas` },
-        { l: 'No prazo', v: `${m.onTimeRate}%`, s: `${m.done} concluídas`, c: m.onTimeRate >= 80 ? 'var(--ok)' : 'var(--warn)' },
-        { l: 'Atrasadas', v: m.overdue, s: 'precisam de atenção', c: m.overdue ? 'var(--bad)' : undefined },
-        { l: 'Em risco', v: m.atRisk.length, s: 'ritmo abaixo do ideal', c: m.atRisk.length ? 'var(--warn)' : undefined },
-        { l: '7 dias', v: m.dueSoon, s: 'entregas próximas' },
-      ].map((k, i) => <Card key={k.l} delay={i * .04} className="kpi"><div className="l">{k.l}</div><div className="v" style={{ color: k.c }}>{k.v}</div><div className="s">{k.s}</div></Card>)}
+    <div className="head home"><div><h1>{hello()}{data.settings.userName ? `, ${data.settings.userName}` : ''}</h1>
+      <p>{new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })}</p></div></div>
+    <div className="dash-top">
+      <motion.div className="hero" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ type: 'spring', stiffness: 260, damping: 26 }}>
+        <div className="k">Entregas no prazo</div>
+        <div className="big">{m.onTimeRate}%</div>
+        <div className="sub">{m.open} tarefas ativas · {m.openHours}h planejadas</div>
+        <div className="split">
+          <div><span className="k">Próximos 7 dias</span><b className="gold">{m.dueSoon} entregas</b></div>
+          <div><span className="k">Precisam de atenção</span><b style={{ color: m.overdue ? 'var(--bad)' : undefined }}>{m.overdue} atrasada{m.overdue === 1 ? '' : 's'}</b></div>
+        </div>
+      </motion.div>
+      <div>
+        <div className="actions">
+          {[{ l: 'Tarefa', i: 'check', k: 'task' as const, c: 'var(--c1)' }, { l: 'Evento', i: 'cal', k: 'event' as const, c: 'var(--c4)' }, { l: 'Nota', i: 'note', k: 'note' as const, c: 'var(--c3)' }].map((a, i) =>
+            <motion.button key={a.l} className="action" onClick={() => quick({ kind: a.k })} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: .05 + i * .05, type: 'spring', stiffness: 300, damping: 24 }} whileHover={{ y: -3 }} whileTap={{ scale: .95 }}>
+              <span className="circ" style={{ background: `color-mix(in srgb, ${a.c} 18%, transparent)`, color: a.c }}><Icon n={a.i} s={20} /></span>{a.l}
+            </motion.button>)}
+        </div>
+        <div className="kpis" style={{ marginTop: 12 }}>
+          <Card className="kpi" delay={.1}><div className="l">Em risco</div><div className="v" style={{ color: m.atRisk.length ? 'var(--warn)' : undefined }}>{m.atRisk.length}</div><div className="s">ritmo abaixo do ideal</div></Card>
+          <Card className="kpi" delay={.14}><div className="l">Concluídas</div><div className="v">{m.done}</div><div className="s">de {data.tasks.length} tarefas</div></Card>
+        </div>
+      </div>
     </div>
 
     <div className="dash">

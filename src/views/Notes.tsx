@@ -71,7 +71,7 @@ export default function Notes() {
         <div className="side-sec" style={{ paddingTop: 10 }}>{f}</div>
         {ns.map(n => <div key={n.id} className={`nitem ${n.id === sel ? 'on' : ''}`} onClick={() => setSel(n.id)}>
           {n.id === sel && <motion.div layoutId="nsel" className="nav-pill" style={{ zIndex: 0 }} />}
-          <div style={{ position: 'relative' }}><div className="tt">{n.pinned && '📌 '}{n.title}</div><div className="ss">{new Date(n.updatedAt).toLocaleDateString('pt-BR')} · {n.body.replace(/[#*\[\]]/g, '').slice(0, 40)}</div></div>
+          <div style={{ position: 'relative' }}><div className="tt">{n.pinned && '📌 '}{n.title}</div><div className="ss">{new Date(n.updatedAt).toLocaleDateString('pt-BR')} · {n.body.replace(/[#*[\]]/g, '').slice(0, 40)}</div></div>
         </div>)}
       </div>)}
     </div>

@@ -38,7 +38,6 @@ export default function Agenda() {
       <Btn variant="icon" onClick={() => setAnchor(addDays(anchor, -7))}><Icon n="left" /></Btn>
       <Btn onClick={() => setAnchor(new Date())}>Hoje</Btn>
       <Btn variant="icon" onClick={() => setAnchor(addDays(anchor, 7))}><Icon n="right" /></Btn>
-      <Btn variant="primary" onClick={() => editEvent()}><Icon n="plus" /> Evento</Btn>
     </div>
     <div className="card" ref={scroller} style={{ flex: 1, minHeight: 0, maxHeight: 'calc(100dvh - 160px)', overflow: 'auto', display: 'block' }}>
       <div className="week">
