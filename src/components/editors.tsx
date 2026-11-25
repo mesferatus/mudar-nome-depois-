@@ -15,13 +15,13 @@ export const useEditors = () => useContext(C)
 export function EditorsProvider({ children }: { children: ReactNode }) {
   const [task, setTask] = useState<Partial<Task> | null>(null)
   const [ev, setEv] = useState<Partial<CalEvent> | null>(null)
-  const [q, setQ] = useState<{ open: boolean; preset?: { kind?: Kind; date?: string } }>({ open: false })
+  const [q, setQ] = useState<{ open: boolean; n: number; preset?: { kind?: Kind; date?: string } }>({ open: false, n: 0 })
   const { upsertNote } = useStore()
-  return <C.Provider value={{ editTask: t => setTask(t ?? { due: today(), start: today() }), editEvent: e => setEv(e ?? { date: today(), start: '09:00', end: '10:00' }), quick: preset => setQ({ open: true, preset }) }}>
+  return <C.Provider value={{ editTask: t => setTask(t ?? { due: today(), start: today() }), editEvent: e => setEv(e ?? { date: today(), start: '09:00', end: '10:00' }), quick: preset => setQ(x => ({ open: true, n: x.n + 1, preset })) }}>
     {children}
     <TaskModal t={task} close={() => setTask(null)} />
     <EventModal e={ev} close={() => setEv(null)} />
-    <QuickAdd open={q.open} preset={q.preset} close={() => setQ({ open: false })} more={(k, f) => {
+    <QuickAdd n={q.n} open={q.open} preset={q.preset} close={() => setQ(x => ({ ...x, open: false }))} more={(k, f) => {
       if (k === 'task') setTask(f as Partial<Task>); else if (k === 'event') setEv(f as Partial<CalEvent>); else upsertNote(f)
     }} />
   </C.Provider>

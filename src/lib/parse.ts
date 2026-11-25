@@ -38,8 +38,8 @@ export function parseQuick(input: string, projects: Project[], now = new Date())
 
   // recorrência: "todo dia", "toda segunda", "semanal", "mensal"
   take(/\s(todo dia|todos os dias|diariamente)(?=\s)/i, () => { out.repeat = 'diaria' })
-  take(/\s(toda semana|semanalmente|semanal)(?=\s)/i, () => { out.repeat = 'semanal' })
-  take(/\s(todo m[eê]s|mensalmente|mensal)(?=\s)/i, () => { out.repeat = 'mensal' })
+  take(/\s(toda semana|semanalmente)(?=\s)/i, () => { out.repeat = 'semanal' })
+  take(/\s(todo m[eê]s|mensalmente)(?=\s)/i, () => { out.repeat = 'mensal' })
   take(/\s(?:tod[ao]s? ?a?s?) (domingo|segunda|ter[cç]a|quarta|quinta|sexta|s[aá]bado)s?(?:-feira)?(?=\s)/i, m => {
     out.repeat = 'semanal'; s = s + ` ${m[1]} `
   })

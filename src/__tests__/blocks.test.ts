@@ -34,3 +34,13 @@ describe('imagem', () => {
   })
   it('imagem enviada (data URL)', () => { expect(mdToBlocks('![](data:image/png;base64,AAAA)')[0].type).toBe('image') })
 })
+
+describe('colunas', () => {
+  it('ida e volta com conteúdo em cada coluna', () => {
+    const md = 'Antes\n:::colunas\n## Esquerda\n- item\n:::coluna\n- [ ] tarefa\n:::\nDepois'
+    const b = mdToBlocks(md)
+    expect(b.map(x => x.type)).toEqual(['p', 'columns', 'p'])
+    expect(b[1].cols).toEqual(['## Esquerda\n- item', '- [ ] tarefa'])
+    expect(blocksToMd(b)).toBe(md)
+  })
+})

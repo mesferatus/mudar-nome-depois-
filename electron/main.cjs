@@ -116,9 +116,10 @@ ipcMain.handle('kairotec:outlook', () => new Promise(resolve => {
   })
 }))
 
-// Requisições sem o bloqueio de navegador (CORS): Notion e links de calendário. Só HTTPS.
+// Requisições sem o bloqueio de navegador (CORS): Notion, links de calendário (HTTPS) e o Ollama local.
 ipcMain.handle('kairotec:fetch', async (_e, { url, method = 'GET', headers = {}, body }) => {
-  if (typeof url !== 'string' || !url.startsWith('https://')) return { ok: false, status: 0, text: 'Destino não permitido' }
+  const local = typeof url === 'string' && /^http:\/\/(localhost|127\.0\.0\.1):11434\//.test(url) // Ollama no próprio PC
+  if (typeof url !== 'string' || (!url.startsWith('https://') && !local)) return { ok: false, status: 0, text: 'Destino não permitido' }
   try {
     const r = await net.fetch(url, { method, headers, body })
     return { ok: r.ok, status: r.status, text: await r.text() }

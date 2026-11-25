@@ -66,6 +66,9 @@ type Ctx = {
   sync: SyncState
   setSync: (s: Partial<SyncState>) => void
   replaceAll: (d: Data) => void
+  undo: () => boolean
+  redo: () => boolean
+  startFresh: (keepNewProjects?: boolean) => void
   upsertTask: (t: Partial<Task> & { id?: string }) => Task
   removeTask: (id: string) => void
   upsertEvent: (e: Partial<CalEvent> & { id?: string }) => CalEvent
@@ -136,7 +139,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [data])
 
   const ref = useRef(data); ref.current = data
-  const mut = (fn: (d: Data) => Data) => setData(d => { const n = { ...fn(d), updatedAt: new Date().toISOString() }; ref.current = n; return n })
+  // histórico para Ctrl+Z / Ctrl+Y (edições seguidas em menos de 0,7 s viram um passo só)
+  const past = useRef<Data[]>([]), future = useRef<Data[]>([]), lastPush = useRef(0)
+  const record = () => { const now = Date.now(); if (now - lastPush.current > 700) { past.current.push(ref.current); if (past.current.length > 80) past.current.shift() } lastPush.current = now; future.current = [] }
+  const mut = (fn: (d: Data) => Data) => { record(); setData(d => { const n = { ...fn(d), updatedAt: new Date().toISOString() }; ref.current = n; return n }) }
+  const jump = (from: React.MutableRefObject<Data[]>, to: React.MutableRefObject<Data[]>) => {
+    const prev = from.current.pop(); if (!prev) return false
+    to.current.push(ref.current); lastPush.current = 0
+    const n = { ...prev, settings: ref.current.settings, updatedAt: new Date().toISOString() }; ref.current = n; setData(n); return true
+  }
   const snap = useRef<Data | null>(null)
   const keep = () => { snap.current = ref.current }
   const undoable = (msg: string) => { toast(msg, { label: 'Desfazer', run: () => { if (snap.current) { const s = snap.current; snap.current = null; setData(s); ref.current = s } } }) }
@@ -150,7 +161,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const api = useMemo<Omit<Ctx, 'data' | 'sync' | 'toasts'>>(() => ({
     setSync, toast,
-    replaceAll: (d) => { ref.current = d; setData(d) },
+    replaceAll: (d) => { record(); ref.current = d; setData(d) },
+    undo: () => jump(past, future),
+    redo: () => jump(future, past),
+    startFresh: (keepNewProjects) => {
+      keep()
+      mut(d => ({ ...d, tasks: [], events: d.events.filter(e => e.source), notes: [], projects: keepNewProjects ? d.projects.filter(p => !['p1', 'p2', 'p3'].includes(p.id)) : [], timer: undefined }))
+      undoable('Exemplos apagados · começando do zero')
+    },
     upsertTask: (t) => {
       const d0 = ref.current, prev = d0.tasks.find(x => x.id === t.id)
       const res = { tags: [], status: 'todo', priority: 'media', title: 'Nova tarefa', createdAt: new Date().toISOString(), ...prev, ...t, id: t.id ?? uid() } as Task

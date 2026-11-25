@@ -9,12 +9,13 @@ const COLORS = ['#e6a87c', '#b9c7e8', '#9fcf9a', '#f0a6ca', '#f0c27a', '#9fd3c7'
 
 /** Configuração inicial em 3 passos: nome → tema → projetos. */
 export function Onboarding() {
-  const { data, setSettings, upsertProject } = useStore()
+  const { data, setSettings, upsertProject, startFresh } = useStore()
   const [step, setStep] = useState(0)
   const [name, setName] = useState(data.settings.userName)
   const [proj, setProj] = useState('')
+  const [fresh, setFresh] = useState(true)
   if (data.settings.onboarded) return null
-  const finish = () => { setSettings({ onboarded: true, userName: name.trim() }) }
+  const finish = () => { if (fresh) startFresh(true); setSettings({ onboarded: true, userName: name.trim() }) }
   const steps = [
     <div key="0" className="ob-step">
       <motion.div initial={{ scale: .6, rotate: -10 }} animate={{ scale: 1, rotate: 0 }} transition={spring}><Logo size={84} /></motion.div>
@@ -28,9 +29,14 @@ export function Onboarding() {
         <span className="ob-sw" style={{ background: `linear-gradient(135deg, ${t.c[0]} 45%, ${t.c[1]} 45% 75%, ${t.c[2]} 75%)` }} />{t.name}</motion.button>)}</div>
     </div>,
     <div key="2" className="ob-step">
-      <h2>Seus projetos</h2><p className="muted">Eles organizam tarefas, agenda e gráficos. Comece com alguns:</p>
+      <h2>Como quer começar?</h2>
+      <div className="ob-choice">
+        <button className={fresh ? 'on' : ''} onClick={() => setFresh(true)}><b>✨ Do zero</b><span>App limpo, só com o que você criar</span></button>
+        <button className={!fresh ? 'on' : ''} onClick={() => setFresh(false)}><b>👀 Com exemplos</b><span>Tarefas e notas de mentira para explorar</span></button>
+      </div>
+      <p className="muted" style={{ marginTop: 8 }}>{fresh ? 'Crie seus projetos (você pode pular e criar depois):' : 'Projetos de exemplo — adicione os seus:'}</p>
       <div className="row wrap" style={{ justifyContent: 'center', gap: 8 }}>
-        <AnimatePresence>{data.projects.map(p => <motion.span layout key={p.id} className="chip" initial={{ scale: .7, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ fontSize: 14, padding: '7px 12px' }}><span className="dot" style={{ background: p.color }} />{p.name}</motion.span>)}</AnimatePresence>
+        <AnimatePresence>{data.projects.filter(p => !fresh || !['p1', 'p2', 'p3'].includes(p.id)).map(p => <motion.span layout key={p.id} className="chip" initial={{ scale: .7, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} style={{ fontSize: 14, padding: '7px 12px' }}><span className="dot" style={{ background: p.color }} />{p.name}</motion.span>)}</AnimatePresence>
       </div>
       <div className="row" style={{ width: '100%' }}><input className="input" placeholder="Novo projeto (Enter)" value={proj} onChange={e => setProj(e.target.value)}
         onKeyDown={e => { if (e.key === 'Enter' && proj.trim()) { upsertProject({ name: proj.trim(), color: COLORS[data.projects.length % COLORS.length] }); setProj('') } }} /></div>

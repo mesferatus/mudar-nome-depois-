@@ -26,7 +26,7 @@ export const THEMES = [
 export default function Settings() {
   const [token, setToken] = useState('')
   const [busy, setBusy] = useState(false)
-  const { data, setSettings, sync, setSync, replaceAll, toast, upsertProject, removeProject, upsertEvent } = useStore()
+  const { data, setSettings, sync, setSync, replaceAll, toast, upsertProject, removeProject, upsertEvent, startFresh } = useStore()
   const s = data.settings
   const fs = fsSupported()
 
@@ -119,6 +119,7 @@ export default function Settings() {
           <Btn onClick={async () => download(await buildWorkbook(data), 'Kairotec-Planner.xlsx')}><Icon n="sheet" /> Baixar .xlsx</Btn>
           <Btn onClick={() => download(new Blob([JSON.stringify(data, null, 2)]), `kairotec-backup-${new Date().toISOString().slice(0, 10)}.json`)}><Icon n="download" /> Backup .json</Btn>
           <label className="btn"><Icon n="cloud" /> Importar .json<input type="file" accept=".json" hidden onChange={async e => { const f = e.target.files?.[0]; if (!f) return; try { const d = JSON.parse(await f.text()); if (confirm('Substituir todos os dados atuais?')) { replaceAll(d); toast('Dados importados') } } catch { toast('Arquivo inválido') } }} /></label>
+          <Btn variant="ghost" onClick={() => { if (confirm('Apagar todas as tarefas, eventos, notas e projetos de exemplo (e os seus)? Tema, nome e conexões ficam. Dá para desfazer logo em seguida.')) startFresh() }}>✨ Começar do zero</Btn>
           <Btn variant="ghost" style={{ color: 'var(--bad)', marginLeft: 'auto' }} onClick={() => { if (confirm('Apagar TODOS os dados locais? (o arquivo de nuvem não é apagado)')) { localStorage.removeItem('kairotec:data'); location.reload() } }}>Resetar app</Btn>
         </div>
       </Card>

@@ -2,8 +2,8 @@
  * Conversão entre blocos (editor estilo Notion) e Markdown (como a nota é guardada).
  * Guardar em Markdown mantém backup, Excel e backlinks funcionando.
  */
-export type BType = 'p' | 'h1' | 'h2' | 'h3' | 'bullet' | 'number' | 'todo' | 'quote' | 'callout' | 'divider' | 'code' | 'toggle' | 'image' | 'page' | 'database' | 'dbview'
-export interface Block { id: string; type: BType; text: string; checked?: boolean; icon?: string; open?: boolean; body?: string }
+export type BType = 'p' | 'h1' | 'h2' | 'h3' | 'bullet' | 'number' | 'todo' | 'quote' | 'callout' | 'divider' | 'code' | 'toggle' | 'image' | 'page' | 'database' | 'dbview' | 'columns'
+export interface Block { id: string; type: BType; text: string; checked?: boolean; icon?: string; open?: boolean; body?: string; cols?: string[] }
 
 let n = 0
 export const bid = () => `b${Date.now().toString(36)}${(n++).toString(36)}`
@@ -13,6 +13,13 @@ export function mdToBlocks(md: string): Block[] {
   const lines = md.replace(/\r/g, '').split('\n')
   for (let i = 0; i < lines.length; i++) {
     const l = lines[i]
+    if (l.trim() === ':::colunas') {
+      const cols: string[][] = [[]]
+      i++
+      while (i < lines.length && lines[i].trim() !== ':::') { if (lines[i].trim() === ':::coluna') cols.push([]); else cols[cols.length - 1].push(lines[i]); i++ }
+      out.push({ id: bid(), type: 'columns', text: '', cols: cols.map(c => c.join('\n')) })
+      continue
+    }
     if (l.startsWith('```')) {
       const code: string[] = []
       i++
@@ -57,6 +64,7 @@ export function blocksToMd(bs: Block[]): string {
       case 'quote': return `> ${b.text}`
       case 'callout': return `> ${b.icon ?? '💡'} ${b.text}`
       case 'divider': return '---'
+      case 'columns': return ':::colunas\n' + (b.cols ?? ['', '']).join('\n:::coluna\n') + '\n:::'
       case 'dbview': return `@banco(${b.text})`
       case 'image': return `![${b.body ?? ''}](${b.text})`
       case 'code': return '```\n' + b.text + '\n```'
@@ -82,6 +90,7 @@ export const SLASH: { type: BType; label: string; hint: string; icon: string; ke
   { type: 'dbview', label: 'Banco de dados (aqui)', hint: 'Tabela/quadro dentro desta página', icon: '▦', keys: 'banco database tabela table quadro galeria inline' },
   { type: 'database', label: 'Banco de dados (página)', hint: 'Em uma página própria', icon: '🗂', keys: 'banco database pagina' },
   { type: 'image', label: 'Imagem', hint: 'Enviar arquivo ou colar link', icon: '🖼', keys: 'imagem image foto print' },
+  { type: 'columns', label: 'Colunas', hint: '2 ou 3 colunas lado a lado', icon: '▥', keys: 'colunas columns lado a lado duas tres' },
   { type: 'divider', label: 'Divisor', hint: 'Linha separadora', icon: '—', keys: 'divisor linha separador' },
 ]
 

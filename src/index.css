@@ -778,3 +778,49 @@ html.desk .main { height: calc(100dvh - 36px); }
 html.desk .focus { bottom: 28px; }
 html.desk .overlay { top: 36px; }
 html.desk .app { min-height: 0; } html.desk body { overflow: hidden; }
+.ob-choice { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
+.ob-choice button { border: 2px solid var(--line); background: var(--panel); color: var(--text); border-radius: 16px; padding: 12px; cursor: pointer; text-align: left; display: grid; gap: 4px; }
+.ob-choice button.on { border-color: var(--accent); background: var(--accent-soft); }
+.ob-choice span { font-size: 12px; color: var(--muted); }
+.bcols { display: grid; gap: 18px; margin: 6px 0; position: relative; padding-right: 26px; }
+.bcol { position: relative; min-width: 0; border-radius: 12px; padding: 2px 4px; }
+.bcol:hover { background: color-mix(in srgb, var(--hover) 40%, transparent); }
+.bcol .beditor { margin-top: 0; }
+.bcol .blk { margin-left: 0; } .bcol .gutter { width: 24px; } .bcol .gutter .gbtn.grip { display: none; }
+.bcol .bend { height: 30px; }
+.bcol-x { position: absolute; top: 2px; right: 2px; border: 0; background: var(--card-2); color: var(--muted); width: 22px; height: 22px; border-radius: 7px; cursor: pointer; opacity: 0; font-size: 11px; }
+.bcol:hover .bcol-x { opacity: 1; }
+.bcol-add { position: absolute; right: 0; top: 0; bottom: 0; width: 20px; border: 1px dashed var(--line); background: none; color: var(--muted); border-radius: 8px; cursor: pointer; opacity: 0; }
+.bcols:hover .bcol-add { opacity: 1; }
+@media (max-width: 899px) { .bcols { grid-template-columns: 1fr !important; padding-right: 0; } .bcol-add { display: none; } }
+.tcard:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; transform: translateY(-2px); }
+
+/* ===================================================================== assistente */
+.ai { display: grid; gap: 14px; }
+.ai-chat { display: flex; flex-direction: column; min-height: 420px; padding: 0; overflow: hidden; }
+.ai-msgs { flex: 1; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+.ai-hello { margin: auto; display: grid; justify-items: center; gap: 8px; text-align: center; max-width: 520px; }
+.ai-orb { width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center; font-size: 28px; background: radial-gradient(circle at 30% 30%, color-mix(in srgb, var(--accent) 60%, transparent), var(--accent-soft)); box-shadow: 0 0 40px var(--accent-soft); }
+.ai-hello b { font: 700 20px 'Sora'; }
+.ai-presets { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 10px; }
+.ai-presets .chip { padding: 9px 14px; font-size: 13px; }
+.ai-msg { display: flex; flex-direction: column; gap: 8px; max-width: 86%; }
+.ai-msg.user { align-self: flex-end; align-items: flex-end; }
+.ai-bubble { padding: 11px 15px; border-radius: 18px; font-size: 14px; line-height: 1.55; white-space: pre-wrap; background: var(--card-2); border: 1px solid var(--line); }
+.ai-msg.user .ai-bubble { background: var(--accent); color: var(--accent-ink); border-color: transparent; border-bottom-right-radius: 6px; }
+.ai-msg.assistant .ai-bubble { border-bottom-left-radius: 6px; }
+.ai-typing { display: flex; gap: 5px; padding: 14px 16px; } .ai-typing i { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); animation: blink 1.2s infinite; } .ai-typing i:nth-child(2) { animation-delay: .2s } .ai-typing i:nth-child(3) { animation-delay: .4s }
+@keyframes blink { 0%, 80%, 100% { opacity: .25 } 40% { opacity: 1 } }
+.ai-acts { display: grid; gap: 6px; padding: 12px; border: 1px dashed color-mix(in srgb, var(--accent) 45%, var(--line)); border-radius: 16px; background: var(--accent-soft); }
+.ai-acts.done { opacity: .6; }
+.ai-act { display: flex; gap: 10px; align-items: flex-start; font-size: 13.5px; cursor: pointer; } .ai-act input { margin-top: 3px; accent-color: var(--accent); }
+.ai-acts .btn { justify-self: start; margin-top: 4px; }
+.ai-paste { display: grid; gap: 8px; padding: 14px; border-radius: 16px; background: var(--panel); border: 1px solid var(--line); font-size: 13.5px; line-height: 1.6; }
+.ai-input { display: flex; gap: 8px; padding: 12px; border-top: 1px solid var(--line); background: var(--card); }
+.ai-side { display: grid; gap: 14px; align-content: start; }
+.ai-steps ol { margin: 6px 0 10px; padding-left: 18px; font-size: 13.5px; line-height: 1.7; } .ai-steps p { margin: 0 0 6px; font-size: 13px; }
+@media (min-width: 900px) {
+  .ai { flex: 1; min-height: 0; grid-template-columns: 1fr 320px; }
+  .ai-chat { min-height: 0; }
+  .ai-side { overflow: auto; }
+}
