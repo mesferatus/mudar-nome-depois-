@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useStore } from '../lib/store'
 import { parseQuick, type Kind } from '../lib/parse'
-import { addDays, iso, fmt, WD, parse as parseDate } from '../lib/date'
+import { addDays, iso, fmt, WD, parse as parseDate, plusHour } from '../lib/date'
 import type { Priority } from '../lib/types'
 import { Btn, Icon, Seg, spring } from './ui'
 
@@ -29,14 +29,14 @@ export function QuickAdd({ open, preset, close, more }: {
   useEffect(() => {
     if (!open) return
     setText(''); setKind(preset?.kind ?? null); setDate(preset?.date); setProj(undefined); setPrio(undefined); setTime(undefined)
-    setTimeout(() => ref.current?.focus(), 60)
+    requestAnimationFrame(() => ref.current?.focus())
   }, [open, preset])
 
   const p = useMemo(() => parseQuick(text, data.projects), [text, data.projects])
   const k: Kind = kind ?? p.kind
   const fDate = date ?? p.date ?? (k === 'note' ? undefined : iso(new Date()))
   const fStart = time ?? p.start ?? (k === 'event' ? '09:00' : undefined)
-  const fEnd = p.end && !time ? p.end : fStart ? `${String(Math.min(23, +fStart.slice(0, 2) + 1)).padStart(2, '0')}:${fStart.slice(3)}` : undefined
+  const fEnd = p.end && !time ? p.end : fStart ? plusHour(fStart) : undefined
   const fProj = proj ?? p.projectId
   const fPrio = prio ?? p.priority ?? 'media'
   const project = data.projects.find(x => x.id === fProj)
@@ -66,7 +66,7 @@ export function QuickAdd({ open, preset, close, more }: {
         onMouseDown={e => e.stopPropagation()} drag="y" dragConstraints={{ top: 0, bottom: 0 }} dragElastic={{ top: 0, bottom: .6 }} onDragEnd={(_, i) => i.offset.y > 120 && close()}>
         <div className="modal-h"><Seg value={k} onChange={v => setKind(v)} options={KINDS} /><button className="btn ghost icon" onClick={close} aria-label="Fechar"><Icon n="x" /></button></div>
         <div className="modal-b">
-          <input ref={ref} className="qa-input" value={text} onChange={e => setText(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') close() }}
+          <input ref={ref} autoFocus className="qa-input" value={text} onChange={e => setText(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') close() }}
             placeholder={k === 'event' ? 'Reunião com fornecedor amanhã 14h #bi' : k === 'note' ? 'Ideias para o modelo de estoque' : 'Entregar dashboard sexta !alta ~4h'} />
           <div className="qa-preview">
             <AnimatePresence initial={false}>

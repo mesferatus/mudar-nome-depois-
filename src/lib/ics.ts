@@ -40,7 +40,7 @@ function when(v?: string): { date: string; time?: string } | undefined {
   }
   return { date: `${m[1]}-${m[2]}-${m[3]}`, time: `${m[4]}:${m[5]}` }
 }
-const addHour = (t: string) => `${pad(Math.min(23, +t.slice(0, 2) + 1))}:${t.slice(3)}`
+const addHour = (t: string) => { const m = Math.min(+t.slice(0, 2) * 60 + +t.slice(3) + 60, 1439); return `${pad(Math.floor(m / 60))}:${pad(m % 60)}` }
 const unesc = (s: string) => s.replace(/\\n/gi, ' ').replace(/\\([,;\\])/g, '$1').trim()
 
 /** Evita duplicar: mesmo título + data + início. */

@@ -3,6 +3,7 @@ import { useStore } from '../lib/store'
 import { Page, Card, Btn, Icon, Seg } from '../components/ui'
 import { fsSupported, pickCloud, pickExcel, readCloud, forget, download, syncAll, regrant } from '../lib/sync'
 import { buildWorkbook } from '../lib/excel'
+import { Connections } from '../components/Connections'
 import { parseIcs, icsKey } from '../lib/ics'
 import { connectSync, disconnectSync, mergeData, syncConnected } from '../lib/cloudsync'
 import type { Data } from '../lib/types'
@@ -95,6 +96,7 @@ export default function Settings() {
         <Btn variant="sm" style={{ marginTop: 10 }} onClick={() => upsertProject({ name: 'Novo projeto', color: ['#5b8def', '#e0a458', '#6fbf8e', '#c97b9b', '#9b7fd1', '#4fb3b3', '#d0705a'][data.projects.length % 7] })}><Icon n="plus" /> Projeto</Btn>
       </Card>
 
+      <Connections />
       <Card title="Integrações">
         <div className="list-row"><Icon n="cal" /><div style={{ flex: 1 }}><b>Calendário do Outlook (.ics)</b><div className="muted" style={{ fontSize: 12 }}>No Outlook: Arquivo → Salvar calendário (.ics). Eventos repetidos não são duplicados.</div></div>
           <label className="btn sm">Importar<input type="file" accept=".ics,text/calendar" hidden onChange={async e => {

@@ -1,10 +1,12 @@
-import { Fragment, useEffect, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, MotionConfig, motion } from 'framer-motion'
 import { StoreProvider, useStore } from './lib/store'
 import { EditorsProvider, useEditors } from './components/editors'
 import { Icon, spring } from './components/ui'
 import { Logo } from './components/Logo'
 import { requestNote } from './lib/nav'
+import { applyPairCode, pullSync } from './lib/cloudsync'
+import { syncOutlook, syncIcsUrl } from './lib/integrations'
 import { Onboarding } from './components/Onboarding'
 import { FocusTimer } from './components/FocusTimer'
 import { useReminders } from './lib/reminders'
@@ -60,7 +62,37 @@ function Shell() {
   const [view, setView] = useState(() => { let v = 'inicio'; try { v = localStorage.getItem('kairotec:view') ?? 'inicio' } catch { /* ignore */ } return LEGACY[v] ?? (NAV.some(n => n.id === v) ? v : 'inicio') })
   const [pal, setPal] = useState(false)
   useReminders(data)
-  const { toast } = useStore()
+  const { toast, replaceAll } = useStore()
+  const live = useRef(data); live.current = data
+  // conectar pelo QR/link do outro aparelho (#conectar=KT1…)
+  useEffect(() => {
+    const m = location.hash.match(/conectar=(KT1\.[\w-]+)/)
+    if (!m) return
+    history.replaceState(null, '', location.pathname + location.search)
+    if (!applyPairCode(m[1])) { toast('Código de conexão inválido'); return }
+    pullSync(live.current).then(d => { if (d) replaceAll(d); toast('Celular conectado ✨ seus dados chegaram') }).catch(() => toast('Conectado, mas não consegui buscar os dados agora'))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+  // Outlook (a cada 15 min) e link .ics (a cada 30 min), sozinhos
+  useEffect(() => {
+    const outlook = () => { if (live.current.settings.outlookAuto) syncOutlook(live.current).then(r => { if (r.data) replaceAll(r.data) }) }
+    const ics = () => { const u = live.current.settings.icsUrl; if (u) syncIcsUrl(live.current, u).then(r => { if (r.data) replaceAll(r.data) }) }
+    const t1 = setTimeout(() => { outlook(); ics() }, 4000)
+    const i1 = setInterval(outlook, 15 * 60000), i2 = setInterval(ics, 30 * 60000)
+    return () => { clearTimeout(t1); clearInterval(i1); clearInterval(i2) }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+  // app de desktop: barra de título na cor do tema e atalho global
+  useEffect(() => {
+    const desk = window.kairotecDesktop; if (!desk) return
+    document.documentElement.classList.add('desk')
+    desk.onQuick(() => quick())
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+  useEffect(() => {
+    const desk = window.kairotecDesktop; if (!desk) return
+    requestAnimationFrame(() => { const cs = getComputedStyle(document.documentElement); desk.prefs({ bg: cs.getPropertyValue('--panel').trim(), fg: cs.getPropertyValue('--text').trim() }) })
+  }, [data.settings.theme])
   useEffect(() => {
     const h = () => toast('Nova versão do Kairotec ✨', { label: 'Atualizar', run: () => location.reload() })
     window.kairotecDesktop?.onUpdateReady(v => toast(`Kairotec ${v} pronto ✨`, { label: 'Reiniciar e atualizar', run: () => window.kairotecDesktop!.restart() }))
@@ -96,6 +128,7 @@ function Shell() {
   const hello = (() => { const h = new Date().getHours(); return h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite' })()
 
   return <div className={`app ${compact ? 'compact' : ''}`}>
+    {window.kairotecDesktop && <div className="titlebar"><span>kairotec<i>.</i></span></div>}
     <header className="topbar">
       <Logo size={44} />
       <div className="t"><b>kairotec<span style={{ color: 'var(--accent)' }}>.</span></b><span>{hello} · {new Date().toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' })}</span></div>

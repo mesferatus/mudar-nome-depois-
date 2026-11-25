@@ -14,3 +14,19 @@ describe('mergeData', () => {
     expect(m.tasks.find(x => x.id === 'a')!.title).toBe('A (PC)')
   })
 })
+
+import { pairCode, applyPairCode, syncConnected, disconnectSync } from '../lib/cloudsync'
+describe('código de pareamento', () => {
+  it('gera no PC e conecta no celular', () => {
+    const store: Record<string, string> = {}
+    globalThis.localStorage = { getItem: k => store[k] ?? null, setItem: (k, v) => { store[k] = String(v) }, removeItem: k => { delete store[k] } } as Storage
+    expect(pairCode()).toBeUndefined()
+    store['kairotec:sync-token'] = 'ghp_abc+/='; store['kairotec:sync-gist'] = 'g123'
+    const code = pairCode()!
+    expect(code).toMatch(/^KT1\.[\w-]+$/)
+    disconnectSync(); expect(syncConnected()).toBe(false)
+    expect(applyPairCode(code)).toBe(true); expect(syncConnected()).toBe(true)
+    expect(store['kairotec:sync-token']).toBe('ghp_abc+/=')
+    expect(applyPairCode('qualquer coisa')).toBe(false)
+  })
+})

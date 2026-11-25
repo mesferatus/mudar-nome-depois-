@@ -13,3 +13,5 @@ export const monthGrid = (y: number, m: number, ws: 0 | 1 = 1) => {
   return Array.from({ length: 42 }, (_, i) => addDays(first, i))
 }
 export const toMin = (t: string) => { const [h, m] = t.split(':').map(Number); return h * 60 + m }
+/** Fim padrão de um evento: 1h depois, sem passar de 23:59. */
+export const plusHour = (t: string) => { const m = Math.min(toMin(t) + 60, 23 * 60 + 59); return `${pad(Math.floor(m / 60))}:${pad(m % 60)}` }

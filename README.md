@@ -37,6 +37,13 @@ Atalhos: `Ctrl+K` paleta de comandos · `Alt+1…7` trocar de aba · `N` nova ta
 - **Outlook:** Ajustes → Integrações → importar `.ics`
 - **Lembretes:** notificação 10 min antes dos eventos e resumo das entregas do dia
 
+## Conexões (Ajustes)
+
+- **Outlook (app .exe):** lê a agenda do Outlook instalado no Windows — sem senha, sem TI. Liga “Sincronizar sozinho” e as reuniões entram a cada 15 min. Para o *novo Outlook*/web: assine o link ICS publicado.
+- **Celular:** com a sincronização ligada, **Gerar código** mostra um QR. Aponte a câmera do celular → o Kairotec abre já com seus dados.
+- **Notion:** importe o .zip exportado (*Markdown & CSV*) ou, no .exe, conecte com um token de integração para trazer páginas e bancos de dados.
+- **App de desktop:** abrir com o Windows, esconder na bandeja, atalho **Ctrl+Alt+K** de qualquer lugar.
+
 ## Sincronizar PC e celular
 
 Ajustes → **Sincronizar entre aparelhos**: crie um token do GitHub só com permissão *gist* e cole em cada aparelho. Os dados ficam num Gist secreto da sua conta; o app envia ao salvar e busca ao abrir/voltar, juntando mudanças feitas em aparelhos diferentes.

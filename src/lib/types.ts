@@ -15,6 +15,7 @@ export interface CalEvent {
   id: string; title: string; date: string; start: string; end: string
   projectId?: string; location?: string; color?: string
   repeat?: Repeat; until?: string
+  source?: 'outlook' | 'ics'; extId?: string
 }
 export interface Note {
   id: string; title: string; body: string; folder: string; tags: string[]; updatedAt: string; pinned?: boolean
@@ -28,7 +29,7 @@ export type PropType = 'text' | 'number' | 'select' | 'date' | 'checkbox'
 export interface Prop { id: string; name: string; type: PropType; options?: { name: string; color: string }[] }
 export type DbView = 'table' | 'board' | 'gallery' | 'list'
 export interface DbSchema { props: Prop[]; view: DbView; sort?: { prop: string; dir: 1 | -1 } }
-export interface Settings { theme: string; userName: string; weekStart: 0 | 1; autoExcel: boolean; autoCloud: boolean; onboarded?: boolean; reminders?: boolean }
+export interface Settings { theme: string; userName: string; weekStart: 0 | 1; autoExcel: boolean; autoCloud: boolean; onboarded?: boolean; reminders?: boolean; outlookAuto?: boolean; icsUrl?: string; lastOutlookSync?: string }
 
 export interface Data {
   version: 1

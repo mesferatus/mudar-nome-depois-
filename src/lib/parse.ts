@@ -1,5 +1,5 @@
 import type { Priority, Project } from './types'
-import { addDays, iso, pad } from './date'
+import { addDays, iso, pad, plusHour } from './date'
 
 /*
  * Interpreta uma frase em português e devolve o que criar.
@@ -59,7 +59,7 @@ export function parseQuick(input: string, projects: Project[], now = new Date())
   })
   if (!out.start) take(new RegExp(String.raw`\s(?:as|às)?\s?${T}(?=\s)`, 'i'), m => { out.start = `${pad(+m[1])}:${m[2] ?? '00'}` })
   if (!out.start) take(/\s(?:as|às)\s(\d{1,2})(?=\s)/i, m => { out.start = `${pad(+m[1])}:00` })
-  if (out.start && !out.end) { const [h, mm] = out.start.split(':').map(Number); out.end = `${pad(Math.min(23, h + 1))}:${pad(mm)}` }
+  if (out.start && !out.end) out.end = plusHour(out.start)
 
   // datas
   const base = new Date(now); base.setHours(12, 0, 0, 0)
