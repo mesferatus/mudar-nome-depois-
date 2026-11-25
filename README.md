@@ -63,6 +63,10 @@ Ajustes → **Sincronizar entre aparelhos**: crie um token do GitHub só com per
 - **▶ Foco** (pomodoro 25 min) em qualquer tarefa: o tempo vai para a tarefa.
 - **Insights**: entregas, % no prazo, lead time, horas de foco e de reunião, por projeto e por semana, estimado × real, dias mais produtivos.
 
+## Celular (Android)
+
+Baixe o **Kairotec.apk** em Releases → *Kairotec para Android* (`.github/workflows/android.yml`). O app abre a versão publicada, então se atualiza sozinho. Alternativa sem instalar: abra o link do GitHub Pages no Chrome → ⋮ → *Adicionar à tela inicial*.
+
 ## Programa para Windows (.exe)
 
 A cada atualização na `main`, o GitHub gera o instalador **Kairotec-Setup.exe** e publica em **Releases** (`.github/workflows/desktop.yml`). Instale uma vez; o app se atualiza sozinho e avisa **"Reiniciar e atualizar"**. Para testar localmente: `npm run desktop`.
