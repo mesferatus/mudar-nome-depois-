@@ -384,7 +384,7 @@ button.chip.on { background: var(--accent); color: var(--accent-ink); }
 .mcal-h, .mcal-g { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; }
 .mcal-h span { font-size: 11px; font-weight: 700; color: var(--faint); padding-bottom: 8px; }
 .mday { border: 0; background: none; color: var(--text); height: 46px; border-radius: 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; cursor: pointer; font-size: 15px; font-weight: 600; }
-.mday.out { opacity: .3; }
+.mday.out { opacity: .3; margin: 0; padding: 0; background: none; border: 0; white-space: normal; font-size: 15px; }
 .mday.today span { color: var(--accent); }
 .mday.sel { background: var(--accent); color: var(--accent-ink); }
 .mday.sel span { color: var(--accent-ink); }
@@ -893,3 +893,19 @@ html.desk .app { min-height: 0; } html.desk body { overflow: hidden; }
 .sheet-it b { font-size: 15px; margin-top: 8px; }
 .sheet-it small { color: var(--muted); font-size: 12px; }
 .sheet-ic { width: 40px; height: 40px; border-radius: 13px; display: grid; place-items: center; color: #fff; box-shadow: 0 6px 16px rgba(0,0,0,.18); }
+.burst { position: absolute; left: 50%; top: 50%; width: 0; height: 0; pointer-events: none; }
+.burst i { position: absolute; width: 6px; height: 6px; margin: -3px; border-radius: 50%; }
+.skel { display: grid; gap: 14px; padding: 18px 0; }
+.skel i { height: 14px; border-radius: 8px; background: linear-gradient(90deg, var(--card-2) 25%, var(--hover) 50%, var(--card-2) 75%); background-size: 200% 100%; animation: shimmer 1.2s infinite linear; }
+@keyframes shimmer { from { background-position: 200% 0 } to { background-position: -200% 0 } }
+@media (prefers-reduced-motion: reduce) { .skel i { animation: none } }
+.main { overflow-x: clip; }
+/* calendário do celular: número sempre no mesmo lugar, pontinhos embaixo */
+.mday { position: relative; }
+.mday i { position: absolute; bottom: 6px; left: 50%; transform: translateX(-50%); }
+.mday { transition: background .2s, transform .15s; } .mday:active { transform: scale(.92); }
+@media (max-width: 760px) {
+  /* botão Novo redondo, só com o ícone, para não cobrir os cartões */
+  .fab { width: 58px; height: 58px; padding: 0; justify-content: center; font-size: 0; gap: 0; border-radius: 20px; }
+  .fab svg { width: 24px; height: 24px; }
+}

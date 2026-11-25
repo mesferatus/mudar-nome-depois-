@@ -65,12 +65,15 @@ export function Empty({ icon, text, action, onAction }: { icon: string; text: st
 }
 
 /** Bolinha de concluir com animação de "pop". */
+const BURST = Array.from({ length: 10 }, (_, i) => { const a = (i / 10) * Math.PI * 2; return { x: Math.cos(a) * 22, y: Math.sin(a) * 22, c: ['var(--accent)', 'var(--ok)', 'var(--warn)', 'var(--info)', 'var(--c2)'][i % 5] } })
 export function DoneToggle({ done, onToggle, color = 'var(--accent)' }: { done: boolean; onToggle: () => void; color?: string }) {
-  return <motion.button className={`done-t ${done ? 'on' : ''}`} aria-label={done ? 'Reabrir' : 'Concluir'} onClick={e => { e.stopPropagation(); onToggle() }}
-    whileTap={{ scale: .8 }} animate={done ? { scale: [1, 1.25, 1] } : { scale: 1 }} transition={{ duration: .3 }} style={{ borderColor: color, background: done ? color : 'transparent' }}>
+  const [pop, setPop] = useState(0)
+  return <motion.button className={`done-t ${done ? 'on' : ''}`} aria-label={done ? 'Reabrir' : 'Concluir'} onClick={e => { e.stopPropagation(); if (!done) { setPop(p => p + 1); navigator.vibrate?.(18) } onToggle() }}
+    whileTap={{ scale: .8 }} animate={done ? { scale: [1, 1.25, 1] } : { scale: 1 }} transition={{ duration: .3 }} style={{ borderColor: color, background: done ? color : 'transparent', position: 'relative', overflow: 'visible' }}>
     <AnimatePresence>{done && <motion.svg key="c" width="12" height="12" viewBox="0 0 24 24" initial={{ pathLength: 0, opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
       <motion.path d="M5 12l5 5 9-10" fill="none" stroke="var(--accent-ink)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: .25 }} />
     </motion.svg>}</AnimatePresence>
+    {pop > 0 && <span key={pop} className="burst" aria-hidden>{BURST.map((b, i) => <motion.i key={i} style={{ background: b.c }} initial={{ x: 0, y: 0, scale: 1, opacity: 1 }} animate={{ x: b.x, y: b.y, scale: 0, opacity: 0 }} transition={{ duration: .55, ease: 'easeOut' }} />)}</span>}
   </motion.button>
 }
 

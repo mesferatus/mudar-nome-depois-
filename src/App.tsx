@@ -138,6 +138,10 @@ function Shell() {
   useEffect(() => { document.title = `${cur.l} · Kairotec` }, [cur.l])
   const overdue = data.tasks.filter(t => t.status !== 'done' && t.due && t.due < new Date().toISOString().slice(0, 10)).length
   const [more, setMore] = useState(false)
+  const order = NAV.findIndex(n => n.id === view)
+  const prev = useRef(order)
+  const dir = order >= prev.current ? 1 : -1
+  useEffect(() => { prev.current = order }, [order])
   useEffect(() => { if (!data.settings.onboarded) return; const t = setTimeout(() => { autoPrepareAI() }, 5000); return () => clearTimeout(t) }, [data.settings.onboarded])
   const hello = (() => { const h = new Date().getHours(); return h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite' })()
 
@@ -176,7 +180,7 @@ function Shell() {
         {sync.status === 'error' ? 'Erro ao sincronizar' : sync.cloudName || sync.excelName ? (sync.lastSaved ? `Sincronizado ${sync.lastSaved}` : 'Conectado') : window.kairotecDesktop ? 'Só neste computador' : 'Só neste navegador'}
       </div>
     </nav>
-    <main className="main"><AnimatePresence mode="wait"><motion.div key={view} style={{ height: view === 'notas' ? '100%' : undefined }}><Cur /></motion.div></AnimatePresence></main>
+    <main className="main"><AnimatePresence mode="wait" custom={dir}><motion.div key={view} custom={dir} variants={SLIDE} initial="in" animate="on" exit="out" transition={{ type: 'spring', stiffness: 420, damping: 36 }} style={{ height: view === 'notas' ? '100%' : undefined }}><Cur /></motion.div></AnimatePresence></main>
     {!['ajustes', 'notas'].includes(view) && <motion.button className="fab" onClick={() => quick({ kind: view === 'calendario' ? 'event' : 'task' })} initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} whileHover={{ y: -2 }} whileTap={{ scale: .92 }} transition={spring} aria-label="Novo" title="Criar (tecla N)">
       <Icon n="plus" s={20} /> Novo</motion.button>}
     <FocusTimer />
@@ -186,6 +190,11 @@ function Shell() {
   </div>
 }
 
+const SLIDE = {
+  in: (d: number) => ({ opacity: 0, x: d * 28 }),
+  on: { opacity: 1, x: 0 },
+  out: (d: number) => ({ opacity: 0, x: d * -20, transition: { duration: .12 } }),
+}
 const MORE = [
   { id: 'assistente', l: 'Assistente', d: 'IA que organiza pra você', icon: 'spark', bg: 'linear-gradient(135deg, #c9a7ff, #8a5cf6)' },
   { id: 'insights', l: 'Insights', d: 'Seu BI pessoal', icon: 'chart', bg: 'linear-gradient(135deg, #8fb8ff, #4f7fe8)' },

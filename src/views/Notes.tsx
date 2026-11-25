@@ -149,7 +149,7 @@ export default function Notes() {
         {parentDb && <div className="props">{parentDb.db!.props.map(p => <div key={p.id} className="prop-r"><span className="prop-n">{p.name}</span>
           <PropValue prop={p} value={note.props?.[p.id]} onChange={v => save({ props: { ...note.props, [p.id]: v } })} onAddOption={name => upsertNote({ id: parentDb.id, db: { ...parentDb.db!, props: parentDb.db!.props.map(x => x.id === p.id ? { ...x, options: [...(x.options ?? []), { name, color: '#c9a7ff' }] } : x) } })} /></div>)}</div>}
         {note.db ? <Database db={note} open={open} /> :
-          <Suspense fallback={<div className="muted" style={{ padding: 20 }}>Abrindo página…</div>}><NotionEditor key={note.id} doc={note.doc} body={note.body} onChange={(doc, body) => save({ doc, body })} onLink={link}
+          <Suspense fallback={<div className="skel">{[90, 70, 82, 55, 76].map((w, i) => <i key={i} style={{ width: `${w}%` }} />)}</div>}><NotionEditor key={note.id} doc={note.doc} body={note.body} onChange={(doc, body) => save({ doc, body })} onLink={link}
             page={id => { const p = data.notes.find(n => n.id === id && !n.trashed); return p && { title: p.title, icon: p.icon, open: () => open(p.id) } }}
             renderDb={id => { const db = data.notes.find(n => n.id === id && n.db && !n.trashed); return db ? <div>
               <button className="bdb-t" onClick={() => open(db.id)}>{db.icon} {db.title || 'Banco de dados'} <span className="muted">↗</span></button><Database db={db} open={open} /></div> : null }}
