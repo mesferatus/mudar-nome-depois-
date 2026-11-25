@@ -141,8 +141,8 @@ function Shell() {
   return <div className={`app ${compact ? 'compact' : ''}`}>
     {window.kairotecDesktop && <div className="titlebar"><span>kairotec<i>.</i></span></div>}
     <header className="topbar">
-      <Logo size={44} />
-      <div className="t"><b>kairotec<span style={{ color: 'var(--accent)' }}>.</span></b><span>{hello} · {new Date().toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' })}</span></div>
+      <Logo size={38} />
+      <div className="t"><b>kairotec<span style={{ color: 'var(--accent)' }}>.</span></b><span>{hello}</span></div>
       <motion.button whileTap={{ scale: .9 }} className="btn icon" aria-label="Assistente" onClick={() => setView('assistente')}><Icon n="spark" /></motion.button>
       <motion.button whileTap={{ scale: .9 }} className="btn icon" aria-label="Insights" onClick={() => setView('insights')}><Icon n="chart" /></motion.button>
       <motion.button whileTap={{ scale: .9 }} className="btn icon" aria-label="Rotinas" onClick={() => setView('rotinas')}><Icon n="bolt" /></motion.button>

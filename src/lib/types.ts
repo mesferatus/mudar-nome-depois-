@@ -23,6 +23,8 @@ export interface Note {
   trashed?: boolean; wide?: boolean
   comments?: { id: string; text: string; at: string; done?: boolean }[]
   db?: DbSchema
+  /** documento do editor (blocos); o body em Markdown é gerado a partir dele */
+  doc?: unknown[]
   props?: Record<string, string | number | boolean | undefined>
 }
 export type PropType = 'text' | 'number' | 'select' | 'date' | 'checkbox'

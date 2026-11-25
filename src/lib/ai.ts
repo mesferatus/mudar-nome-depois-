@@ -161,3 +161,41 @@ export async function ollamaAsk(model: string, d: Data, pedido: string, history:
   if (!r.ok) throw new Error(`O modelo local respondeu ${r.status}`)
   return parseReply(JSON.parse(r.text).message?.content ?? '')
 }
+
+// ---------------- No aparelho (WebLLM: roda dentro do app, pela placa de vídeo — PC ou celular) ----------------
+export const DEVICE_MODELS = [
+  { id: 'Qwen2.5-1.5B-Instruct-q4f16_1-MLC', l: 'Equilibrado', size: '≈1 GB' },
+  { id: 'Qwen2.5-0.5B-Instruct-q4f16_1-MLC', l: 'Leve (celulares simples)', size: '≈400 MB' },
+  { id: 'Qwen2.5-3B-Instruct-q4f16_1-MLC', l: 'Melhor (PC com boa placa)', size: '≈2 GB' },
+]
+export const deviceSupported = () => typeof navigator !== 'undefined' && 'gpu' in navigator
+
+type Engine = { chat: { completions: { create: (b: unknown) => Promise<{ choices: { message: { content: string | null } }[] }> } } }
+let engine: { id: string; e: Engine } | null = null
+let loading: Promise<Engine> | null = null
+
+/** Baixa (uma vez; fica guardado no aparelho) e carrega o modelo. */
+export async function deviceLoad(model: string, onProgress?: (pct: number, text: string) => void): Promise<Engine> {
+  if (engine?.id === model) return engine.e
+  if (loading) return loading
+  loading = (async () => {
+    const web = await import('@mlc-ai/web-llm')
+    const e = await web.CreateMLCEngine(model, { initProgressCallback: (r: { progress: number; text: string }) => onProgress?.(Math.round(r.progress * 100), r.text) }) as unknown as Engine
+    engine = { id: model, e }
+    return e
+  })()
+  try { return await loading } finally { loading = null }
+}
+export const deviceReady = (model: string) => engine?.id === model
+export async function deviceCached(model: string) {
+  try { const web = await import('@mlc-ai/web-llm'); return await web.hasModelInCache(model) } catch { return false }
+}
+
+export async function deviceAsk(model: string, d: Data, pedido: string, history: { role: 'user' | 'assistant'; content: string }[], notas = false): Promise<Reply> {
+  const e = await deviceLoad(model)
+  const r = await e.chat.completions.create({
+    temperature: 0.2, response_format: { type: 'json_object' },
+    messages: [{ role: 'system', content: SYSTEM + `\n\n--- MEUS DADOS ---\n${buildContext(d, { notas })}` }, ...history.slice(-4), { role: 'user', content: pedido }],
+  })
+  return parseReply(r.choices[0]?.message?.content ?? '')
+}

@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 import { useStore } from '../lib/store'
-import { Page, Card, Btn, Icon, Seg } from '../components/ui'
+import { Page, Btn, Icon, Seg } from '../components/ui'
 import { fsSupported, pickCloud, pickExcel, readCloud, forget, download, syncAll, regrant } from '../lib/sync'
 import { buildWorkbook } from '../lib/excel'
 import { Connections } from '../components/Connections'
@@ -23,7 +24,21 @@ export const THEMES = [
   { id: 'abobora', name: 'Abóbora 🎃', c: ['#140e1a', '#6b3f8f', '#ff9b42'] },
 ]
 
+/** Seção recolhível no estilo dos ajustes do celular: só abre o que você quer ver. */
+function Sec({ id, icon, title, sub, open, setOpen, children }: { id: string; icon: ReactNode; title: string; sub?: ReactNode; open: string | null; setOpen: (v: string | null) => void; children: ReactNode }) {
+  const on = open === id
+  return <div className={`sec ${on ? 'on' : ''}`}>
+    <button className="sec-h" onClick={() => setOpen(on ? null : id)} aria-expanded={on}>
+      <span className="sec-i">{icon}</span><span className="sec-t"><b>{title}</b>{sub && <small>{sub}</small>}</span>
+      <motion.span className="sec-c" animate={{ rotate: on ? 90 : 0 }}>›</motion.span>
+    </button>
+    <AnimatePresence initial={false}>{on && <motion.div className="sec-b" initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: .22 }}>
+      <div className="sec-in">{children}</div></motion.div>}</AnimatePresence>
+  </div>
+}
+
 export default function Settings() {
+  const [open, setOpen] = useState<string | null>(null)
   const [token, setToken] = useState('')
   const [busy, setBusy] = useState(false)
   const { data, setSettings, sync, setSync, replaceAll, toast, upsertProject, removeProject, upsertEvent, startFresh } = useStore()
@@ -40,21 +55,28 @@ export default function Settings() {
   }
   const connectExcel = async () => { try { const h = await pickExcel(); await syncAll(data); setSync({ excelName: h.name }); toast('Planilha conectada e atualizada') } catch { /* cancelado */ } }
 
+  const cur = THEMES.find(t => t.id === s.theme) ?? THEMES[0]
+  const p = { open, setOpen }
   return <Page>
-    <div className="head"><div><h1>Ajustes</h1><p>Aparência, sincronização e dados</p></div></div>
-    <div className="settings"><div className="col-s">
-      <Card title="Aparência">
-        <div className="themes">{THEMES.map(t => <button key={t.id} className={`tsw ${s.theme === t.id ? 'on' : ''}`} onClick={() => setSettings({ theme: t.id })}>
-          <div className="pv" style={{ background: t.c[0] }}><div style={{ background: t.c[1] }} /><div style={{ padding: 8, display: 'grid', gap: 5, alignContent: 'start' }}><i style={{ height: 6, width: '60%', borderRadius: 4, background: t.c[2] }} /><i style={{ height: 6, width: '80%', borderRadius: 4, background: t.c[1] }} /><i style={{ height: 6, width: '40%', borderRadius: 4, background: t.c[1] }} /></div></div>
-          <b style={{ fontSize: 13 }}>{t.name}</b></button>)}</div>
-        <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', marginTop: 16 }}>
+    <div className="head"><div><h1>Ajustes</h1><p>Toque numa seção para abrir</p></div></div>
+    <div className="settings-list">
+      <div className="sec-group">
+        <Sec id="voce" {...p} icon="👤" title="Você" sub={`${s.userName || 'Sem nome'} · semana começa ${s.weekStart ? 'segunda' : 'domingo'}`}>
+          <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
           <div className="field"><label>Seu nome</label><input className="input" value={s.userName} onChange={e => setSettings({ userName: e.target.value })} placeholder="Como quer ser chamada?" /></div>
           <div className="field"><label>Semana começa</label><Seg value={String(s.weekStart) as '0' | '1'} onChange={v => setSettings({ weekStart: Number(v) as 0 | 1 })} options={[{ v: '1', l: 'Segunda' }, { v: '0', l: 'Domingo' }]} /></div>
         </div>
-      </Card>
-
-      <Card title="Sincronizar entre aparelhos" sub={syncConnected() ? (sync.cloudSync === 'erro' ? '⚠ erro' : '● conectado') : ''}>
-        {syncConnected() ? <div className="list-row"><span style={{ fontSize: 18 }}>🔄</span><div style={{ flex: 1 }}><b>Sincronização ligada</b><div className="muted" style={{ fontSize: 12 }}>PC, celular e o app instalado ficam iguais sozinhos (envia ao salvar, busca ao abrir).</div></div>
+        </Sec>
+        <Sec id="tema" {...p} icon={<span className="sec-sw" style={{ background: `linear-gradient(135deg, ${cur.c[1]}, ${cur.c[2]})` }} />} title="Tema" sub={cur.name}>
+          <div className="themes">{THEMES.map(t => <button key={t.id} className={`tsw ${s.theme === t.id ? 'on' : ''}`} onClick={() => setSettings({ theme: t.id })}>
+          <div className="pv" style={{ background: t.c[0] }}><div style={{ background: t.c[1] }} /><div style={{ padding: 8, display: 'grid', gap: 5, alignContent: 'start' }}><i style={{ height: 6, width: '60%', borderRadius: 4, background: t.c[2] }} /><i style={{ height: 6, width: '80%', borderRadius: 4, background: t.c[1] }} /><i style={{ height: 6, width: '40%', borderRadius: 4, background: t.c[1] }} /></div></div>
+          <b style={{ fontSize: 13 }}>{t.name}</b></button>)}</div>
+        </Sec>
+      </div>
+      <div className="sec-group">
+        <Sec id="conexoes" {...p} icon="🔗" title="Conexões" sub="Outlook, celular, Notion e app de desktop"><Connections /></Sec>
+        <Sec id="sync" {...p} icon="🔄" title="Sincronizar aparelhos" sub={syncConnected() ? (sync.cloudSync === 'erro' ? '⚠ erro' : '● ligado') : 'desligado'}>
+          {syncConnected() ? <div className="list-row"><span style={{ fontSize: 18 }}>🔄</span><div style={{ flex: 1 }}><b>Sincronização ligada</b><div className="muted" style={{ fontSize: 12 }}>PC, celular e o app instalado ficam iguais sozinhos (envia ao salvar, busca ao abrir).</div></div>
           <Btn variant="sm ghost" onClick={() => { disconnectSync(); setSync({ cloudSync: undefined }); toast('Sincronização desligada neste aparelho') }}>Desligar</Btn></div> : <>
           <div className="muted" style={{ fontSize: 13, lineHeight: 1.6 }}>Guarda seus dados num <b>Gist secreto</b> da sua conta do GitHub. Faça uma vez em cada aparelho:<br />
             1. <a href="https://github.com/settings/tokens/new?scopes=gist&description=Kairotec" target="_blank" rel="noreferrer">Crie um token</a> (marque só <b>gist</b> e escolha "No expiration").<br />2. Cole abaixo e conecte. No segundo aparelho, use o mesmo token — ele encontra seus dados sozinho.</div>
@@ -66,9 +88,9 @@ export default function Settings() {
             }}>{busy ? 'Conectando…' : 'Conectar'}</Btn></div>
           <div className="muted" style={{ fontSize: 11, marginTop: 8 }}>O Gist secreto não aparece no seu perfil nem em buscas, mas quem tiver o link consegue abrir — não guarde senhas nas notas.</div>
         </>}
-      </Card>
-      <Card title="Nuvem & Excel" sub={sync.status === 'saving' ? 'salvando…' : sync.lastSaved ? `salvo às ${sync.lastSaved}` : ''}>
-        {!fs && <div className="out" style={{ marginTop: 0, marginBottom: 12, color: 'var(--warn)' }}>Seu navegador não permite gravar direto em arquivos. Use Microsoft Edge ou Google Chrome — ou use os botões de exportar abaixo.</div>}
+        </Sec>
+        <Sec id="nuvem" {...p} icon={<Icon n="cloud" />} title="Nuvem & Excel" sub={sync.excelName ? `● ${sync.excelName}` : sync.lastSaved ? `salvo às ${sync.lastSaved}` : fs ? 'OneDrive e planilha' : 'disponível no PC'}>
+          {!fs && <div className="out" style={{ marginTop: 0, marginBottom: 12, color: 'var(--warn)' }}>Seu navegador não permite gravar direto em arquivos. Use Microsoft Edge ou Google Chrome — ou use os botões de exportar abaixo.</div>}
         {sync.error && <div className="out" style={{ marginTop: 0, marginBottom: 12, color: 'var(--bad)' }}>{sync.error} <Btn variant="sm" onClick={async () => { await regrant(); const r = await syncAll(data); setSync({ error: r.error, status: r.error ? 'error' : 'saved' }) }}>Tentar de novo</Btn></div>}
         <div className="list-row"><Icon n="cloud" /><div style={{ flex: 1 }}><b>Arquivo de dados (.json)</b><div className="muted" style={{ fontSize: 12 }}>Salve numa pasta do OneDrive/SharePoint: vira seu backup na nuvem e permite abrir em outro PC.</div>
           {sync.cloudName && <div className="mono" style={{ color: 'var(--ok)' }}>● {sync.cloudName}</div>}</div>
@@ -84,21 +106,19 @@ export default function Settings() {
           <label className="row" style={{ gap: 6 }}><input type="checkbox" checked={s.autoExcel} onChange={e => setSettings({ autoExcel: e.target.checked })} /> Atualizar planilha automaticamente</label>
         </div>
         <div className="muted" style={{ fontSize: 12, marginTop: 8 }}>Dica: se a planilha estiver aberta no Excel o Windows bloqueia a gravação; o app avisa e tenta de novo na próxima alteração.</div>
-      </Card>
-
-      </div><div className="col-s">
-      <Card title="Projetos">
-        {data.projects.map(p => <div key={p.id} className="list-row">
+        </Sec>
+      </div>
+      <div className="sec-group">
+        <Sec id="projetos" {...p} icon="🗂️" title="Projetos" sub={`${data.projects.length} ${data.projects.length === 1 ? 'projeto' : 'projetos'}`}>
+          {data.projects.map(p => <div key={p.id} className="list-row">
           <input type="color" value={p.color} onChange={e => upsertProject({ id: p.id, color: e.target.value })} style={{ width: 28, height: 28, border: 0, background: 'none', padding: 0 }} />
           <input className="input" value={p.name} onChange={e => upsertProject({ id: p.id, name: e.target.value })} style={{ flex: 1 }} />
           <span className="muted" style={{ fontSize: 12, width: 80 }}>{data.tasks.filter(t => t.projectId === p.id).length} tarefas</span>
           <Btn variant="ghost icon" onClick={() => confirm(`Remover projeto "${p.name}"?`) && removeProject(p.id)}><Icon n="trash" /></Btn></div>)}
         <Btn variant="sm" style={{ marginTop: 10 }} onClick={() => upsertProject({ name: 'Novo projeto', color: ['#5b8def', '#e0a458', '#6fbf8e', '#c97b9b', '#9b7fd1', '#4fb3b3', '#d0705a'][data.projects.length % 7] })}><Icon n="plus" /> Projeto</Btn>
-      </Card>
-
-      <Connections />
-      <Card title="Integrações">
-        <div className="list-row"><Icon n="cal" /><div style={{ flex: 1 }}><b>Calendário do Outlook (.ics)</b><div className="muted" style={{ fontSize: 12 }}>No Outlook: Arquivo → Salvar calendário (.ics). Eventos repetidos não são duplicados.</div></div>
+        </Sec>
+        <Sec id="avisos" {...p} icon="🔔" title="Lembretes e calendário" sub={s.reminders ? 'lembretes ligados' : 'importar .ics, lembretes'}>
+          <div className="list-row"><Icon n="cal" /><div style={{ flex: 1 }}><b>Calendário do Outlook (.ics)</b><div className="muted" style={{ fontSize: 12 }}>No Outlook: Arquivo → Salvar calendário (.ics). Eventos repetidos não são duplicados.</div></div>
           <label className="btn sm">Importar<input type="file" accept=".ics,text/calendar" hidden onChange={async e => {
             const f = e.target.files?.[0]; if (!f) return
             const evs = parseIcs(await f.text()), have = new Set(data.events.map(icsKey))
@@ -113,16 +133,17 @@ export default function Settings() {
           }}>{s.reminders ? 'Ligados' : 'Ligar'}</Btn></div>
         <div className="list-row"><span style={{ fontSize: 18 }}>👋</span><div style={{ flex: 1 }}><b>Boas-vindas</b><div className="muted" style={{ fontSize: 12 }}>Ver de novo a configuração inicial.</div></div>
           <Btn variant="sm" onClick={() => setSettings({ onboarded: false })}>Rever</Btn></div>
-      </Card>
-      <Card title="Exportar & importar">
-        <div className="row wrap">
+        </Sec>
+        <Sec id="dados" {...p} icon="💾" title="Dados" sub="exportar, backup, começar do zero">
+          <div className="row wrap">
           <Btn onClick={async () => download(await buildWorkbook(data), 'Kairotec-Planner.xlsx')}><Icon n="sheet" /> Baixar .xlsx</Btn>
           <Btn onClick={() => download(new Blob([JSON.stringify(data, null, 2)]), `kairotec-backup-${new Date().toISOString().slice(0, 10)}.json`)}><Icon n="download" /> Backup .json</Btn>
           <label className="btn"><Icon n="cloud" /> Importar .json<input type="file" accept=".json" hidden onChange={async e => { const f = e.target.files?.[0]; if (!f) return; try { const d = JSON.parse(await f.text()); if (confirm('Substituir todos os dados atuais?')) { replaceAll(d); toast('Dados importados') } } catch { toast('Arquivo inválido') } }} /></label>
           <Btn variant="ghost" onClick={() => { if (confirm('Apagar todas as tarefas, eventos, notas e projetos de exemplo (e os seus)? Tema, nome e conexões ficam. Dá para desfazer logo em seguida.')) startFresh() }}>✨ Começar do zero</Btn>
           <Btn variant="ghost" style={{ color: 'var(--bad)', marginLeft: 'auto' }} onClick={() => { if (confirm('Apagar TODOS os dados locais? (o arquivo de nuvem não é apagado)')) { localStorage.removeItem('kairotec:data'); location.reload() } }}>Resetar app</Btn>
         </div>
-      </Card>
-    </div></div>
+        </Sec>
+      </div>
+    </div>
   </Page>
 }
