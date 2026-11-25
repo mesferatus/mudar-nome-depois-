@@ -1,8 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useStore } from '../lib/store'
 import { Btn, Icon, Empty, spring } from '../components/ui'
-import { BlockEditor } from '../components/BlockEditor'
 import { COVERS, ICONS, coverBg } from '../lib/art'
 import { TEMPLATES } from '../lib/blocks'
 import type { Note } from '../lib/types'
@@ -10,6 +9,7 @@ import { Database, PropValue, newDb } from '../components/Database'
 import { download } from '../lib/sync'
 import { takeNote } from '../lib/nav'
 
+const NotionEditor = lazy(() => import('../components/NotionEditor').then(m => ({ default: m.NotionEditor })))
 const tagsOf = (body: string) => [...new Set([...body.matchAll(/(?:^|\s)#([\p{L}\w-]+)/gu)].map(m => m[1]))]
 
 function Comments({ note, save }: { note: Note; save: (p: Partial<Note>) => void }) {
@@ -117,7 +117,7 @@ export default function Notes() {
             <span className="muted">{note.icon} {note.title}</span>
             <span style={{ flex: 1 }} />
             <Btn variant="ghost icon" title={note.pinned ? 'Remover dos favoritos' : 'Favoritar'} onClick={() => save({ pinned: !note.pinned })} style={{ color: note.pinned ? 'var(--accent)' : undefined }}>{note.pinned ? '★' : '☆'}</Btn>
-            <span className="muted mono" style={{ fontSize: 11 }}>{note.body.split(/\s+/).filter(Boolean).length} palavras · editada {new Date(note.updatedAt).toLocaleString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
+            <span className="muted mono desk-only" style={{ fontSize: 11 }}>{note.body.split(/\s+/).filter(Boolean).length} palavras · editada {new Date(note.updatedAt).toLocaleString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
             <div style={{ position: 'relative' }}><Btn variant="ghost icon" title="Mais" onClick={() => setPicker(picker === 'menu' ? null : 'menu')}>⋯</Btn>
               <AnimatePresence>{(picker === 'menu' || picker === 'move') && <motion.div className="pmenu" initial={{ opacity: 0, y: -6, scale: .97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0 }} transition={spring}>
                 {picker === 'menu' ? <>
@@ -149,15 +149,15 @@ export default function Notes() {
         {parentDb && <div className="props">{parentDb.db!.props.map(p => <div key={p.id} className="prop-r"><span className="prop-n">{p.name}</span>
           <PropValue prop={p} value={note.props?.[p.id]} onChange={v => save({ props: { ...note.props, [p.id]: v } })} onAddOption={name => upsertNote({ id: parentDb.id, db: { ...parentDb.db!, props: parentDb.db!.props.map(x => x.id === p.id ? { ...x, options: [...(x.options ?? []), { name, color: '#c9a7ff' }] } : x) } })} /></div>)}</div>}
         {note.db ? <Database db={note} open={open} /> :
-          <BlockEditor key={note.id} value={note.body} onChange={body => save({ body })} onLink={link}
+          <Suspense fallback={<div className="muted" style={{ padding: 20 }}>Abrindo página…</div>}><NotionEditor key={note.id} doc={note.doc} body={note.body} onChange={(doc, body) => save({ doc, body })} onLink={link}
+            page={id => { const p = data.notes.find(n => n.id === id && !n.trashed); return p && { title: p.title, icon: p.icon, open: () => open(p.id) } }}
             renderDb={id => { const db = data.notes.find(n => n.id === id && n.db && !n.trashed); return db ? <div>
               <button className="bdb-t" onClick={() => open(db.id)}>{db.icon} {db.title || 'Banco de dados'} <span className="muted">↗</span></button><Database db={db} open={open} /></div> : null }}
             onCreate={kind => {
             if (kind === 'dbview') { const n = upsertNote({ title: 'Banco de dados', icon: '🗂️', parentId: note.id, folder: 'Geral', body: '', db: newDb() }); return n.id }
-            const title = kind === 'database' ? 'Banco de dados' : 'Nova página'
-            const n = upsertNote({ title, icon: kind === 'database' ? '🗂️' : '📄', parentId: note.id, folder: 'Geral', body: '', ...(kind === 'database' ? { db: newDb() } : {}) })
-            upsertNote({ id: note.id, expanded: true }); setTimeout(() => open(n.id), 50); return title
-          }} />}
+            const n = upsertNote({ title: 'Nova página', icon: '📄', parentId: note.id, folder: 'Geral', body: '' })
+            upsertNote({ id: note.id, expanded: true }); return n.id
+          }} /></Suspense>}
 
         {!note.db && <div className="subpages">
           {kids(note.id).map(k => <motion.button key={k.id} className="subpage" whileHover={{ x: 3 }} onClick={() => open(k.id)}><span>{k.icon ?? '📄'}</span>{k.title}</motion.button>)}

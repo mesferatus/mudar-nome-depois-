@@ -2,16 +2,23 @@ import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useStore } from '../lib/store'
 import { Btn, Card, Icon, Page, Seg, spring } from '../components/ui'
-import { applyActions, copilotPrompt, describe, ollamaAsk, ollamaModels, ollamaPull, parseReply, PRESETS, SUGGESTED_MODEL, type Action } from '../lib/ai'
+import { applyActions, copilotPrompt, describe, deviceAsk, deviceCached, deviceLoad, deviceReady, deviceSupported, DEVICE_MODELS, ollamaAsk, ollamaModels, ollamaPull, parseReply, PRESETS, SUGGESTED_MODEL, type Action } from '../lib/ai'
 
-type Engine = 'local' | 'copilot'
+type Engine = 'aparelho' | 'local' | 'copilot'
+const isPhone = () => matchMedia('(max-width: 760px), (pointer: coarse)').matches
 type Msg = { role: 'user' | 'assistant'; content: string; acoes?: Action[]; applied?: boolean }
 const store = { get: (k: string) => { try { return localStorage.getItem(k) ?? '' } catch { return '' } }, set: (k: string, v: string) => { try { localStorage.setItem(k, v) } catch { /* ignore */ } } }
 
 /** Assistente: conversa com seus dados e propõe ações que você aprova. Local (Ollama) ou Copilot da empresa. */
 export default function Assistant() {
   const { data, replaceAll, toast } = useStore()
-  const [engine, setEngine] = useState<Engine>(() => (store.get('kairotec:ai-engine') as Engine) || 'local')
+  const [engine, setEngine] = useState<Engine>(() => {
+    const e = store.get('kairotec:ai-engine') as Engine
+    if (e === 'copilot' || (e === 'aparelho' && deviceSupported()) || (e === 'local' && !isPhone())) return e
+    return deviceSupported() ? 'aparelho' : 'copilot'
+  })
+  const [devModel, setDevModel] = useState(() => store.get('kairotec:ai-device') || (isPhone() ? DEVICE_MODELS[1].id : DEVICE_MODELS[0].id))
+  const [devState, setDevState] = useState<{ pct?: number; text?: string; cached?: boolean; err?: string }>({})
   const [models, setModels] = useState<string[] | null | undefined>(undefined) // undefined = verificando, null = Ollama não encontrado
   const [model, setModel] = useState(() => store.get('kairotec:ai-model') || SUGGESTED_MODEL)
   const [msgs, setMsgs] = useState<Msg[]>([])
@@ -25,7 +32,13 @@ export default function Assistant() {
   const check = () => { setModels(undefined); ollamaModels().then(m => { setModels(m); if (m?.length && !m.includes(model)) setModel(m.find(x => x.startsWith('qwen')) ?? m[0]) }) }
   useEffect(() => { if (engine === 'local') check() // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [engine])
-  useEffect(() => { store.set('kairotec:ai-engine', engine); store.set('kairotec:ai-model', model) }, [engine, model])
+  useEffect(() => { store.set('kairotec:ai-engine', engine); store.set('kairotec:ai-model', model); store.set('kairotec:ai-device', devModel) }, [engine, model, devModel])
+  useEffect(() => { if (engine === 'aparelho') deviceCached(devModel).then(c => setDevState(s => ({ ...s, cached: c || deviceReady(devModel) }))) }, [engine, devModel])
+  const loadDevice = async () => {
+    setDevState({ pct: 0, text: 'Preparando…' })
+    try { await deviceLoad(devModel, (pct, text) => setDevState({ pct, text })); setDevState({ cached: true }); return true }
+    catch (e) { setDevState({ err: (e as Error).message }); return false }
+  }
   useEffect(() => { end.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }) }, [msgs, busy])
 
   const ask = async (pedido: string, notas = false) => {
@@ -39,10 +52,12 @@ export default function Assistant() {
     }
     setBusy('pensando')
     try {
-      const r = await ollamaAsk(model, data, pedido, msgs.map(x => ({ role: x.role, content: x.content })), notas)
+      if (engine === 'aparelho' && !deviceReady(devModel)) { setBusy('carregando'); if (!(await loadDevice())) throw new Error('Não consegui carregar a IA neste aparelho'); setBusy('pensando') }
+      const hist = msgs.map(x => ({ role: x.role, content: x.content }))
+      const r = engine === 'aparelho' ? await deviceAsk(devModel, data, pedido, hist, notas) : await ollamaAsk(model, data, pedido, hist, notas)
       setMsgs(m => [...m, { role: 'assistant', content: r.resposta || '(sem resposta)', acoes: r.acoes }])
       setChecked(Object.fromEntries(r.acoes.map((_, i) => [`${msgs.length + 1}:${i}`, true])))
-    } catch (e) { setMsgs(m => [...m, { role: 'assistant', content: `⚠ ${(e as Error).message}. O Ollama está aberto?` }]) }
+    } catch (e) { setMsgs(m => [...m, { role: 'assistant', content: `⚠ ${(e as Error).message}.${engine === 'local' ? ' O Ollama está aberto?' : ''}` }]) }
     finally { setBusy(null) }
   }
   const readPaste = () => {
@@ -60,10 +75,10 @@ export default function Assistant() {
     toast(`${chosen.length} ${chosen.length === 1 ? 'ação aplicada' : 'ações aplicadas'} ✨ · Ctrl+Z desfaz`)
   }
 
-  const ready = engine === 'copilot' || !!models?.length
+  const ready = engine === 'copilot' || engine === 'aparelho' || !!models?.length
   return <Page>
     <div className="head"><div><h1>Assistente</h1><p>Converse com suas tarefas, agenda e notas. Ele só sugere — você decide o que aplicar.</p></div><div className="sp" />
-      <Seg value={engine} onChange={setEngine} options={[{ v: 'local', l: '💻 Local (grátis)' }, { v: 'copilot', l: '🪟 Copilot da empresa' }]} /></div>
+      <Seg value={engine} onChange={setEngine} options={[...(deviceSupported() ? [{ v: 'aparelho' as Engine, l: '✨ Neste aparelho' }] : []), ...(isPhone() ? [] : [{ v: 'local' as Engine, l: '💻 Ollama' }]), { v: 'copilot' as Engine, l: '🪟 Copilot' }]} /></div>
     <div className="ai">
       <div className="ai-chat card">
         <div className="ai-msgs scroll">
@@ -79,7 +94,7 @@ export default function Assistant() {
               {m.applied ? <div className="muted" style={{ fontSize: 12 }}>✓ Aplicado · Ctrl+Z para desfazer</div> : <Btn variant="sm primary" onClick={() => apply(mi)}><Icon n="check" s={14} /> Aplicar selecionadas</Btn>}
             </div>}
           </motion.div>)}</AnimatePresence>
-          {busy && <div className="ai-msg assistant"><div className="ai-bubble ai-typing"><i /><i /><i /></div></div>}
+          {busy && <div className="ai-msg assistant"><div className="ai-bubble ai-typing">{busy === 'carregando' ? <span className="muted">Preparando a IA… {devState.pct ?? 0}%</span> : <><i /><i /><i /></>}</div></div>}
           {pending && <motion.div className="ai-paste" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
             <b>1.</b> A pergunta já está copiada. <a href="https://m365.cloud.microsoft/chat" target="_blank" rel="noreferrer">Abra o Copilot</a>, cole (Ctrl+V) e envie.<br /><b>2.</b> Copie a resposta inteira do Copilot e cole aqui:
             <textarea className="input" rows={4} value={paste} onChange={e => setPaste(e.target.value)} placeholder='{"resposta": "...", "acoes": [...]}' />
@@ -88,13 +103,21 @@ export default function Assistant() {
           <div ref={end} />
         </div>
         <form className="ai-input" onSubmit={e => { e.preventDefault(); ask(input) }}>
-          <input className="input" placeholder={ready ? 'Ex.: o que eu deveria fazer hoje? · reorganiza minha sexta' : 'Configure o modelo local ao lado →'} value={input} onChange={e => setInput(e.target.value)} disabled={!ready || !!busy} />
+          <input className="input" placeholder={ready ? 'Ex.: o que eu deveria fazer hoje?' : 'Configure o modelo ao lado →'} value={input} onChange={e => setInput(e.target.value)} disabled={!ready || !!busy} />
           <Btn variant="primary" disabled={!ready || !input.trim() || !!busy}>Enviar</Btn>
         </form>
       </div>
 
       <div className="ai-side">
-        {engine === 'local' ? <Card title="IA local · Ollama" sub={models === undefined ? 'verificando…' : models ? '● pronta' : '○ não encontrada'}>
+        {engine === 'aparelho' ? <Card title="IA neste aparelho" sub={devState.cached ? '● pronta' : '○ baixar uma vez'}>
+          <div className="ai-steps">
+            <p className="muted">Roda aqui dentro, de graça e sem internet depois de baixada. Funciona no PC e no celular.</p>
+            <div className="field"><label>Modelo</label><select className="input" value={devModel} onChange={e => setDevModel(e.target.value)}>{DEVICE_MODELS.map(m => <option key={m.id} value={m.id}>{m.l} · {m.size}</option>)}</select></div>
+            {devState.pct !== undefined ? <div><div className="ai-bar"><i style={{ width: `${devState.pct}%` }} /></div><small className="muted">{devState.pct}% · baixando (só na primeira vez)</small></div>
+              : !devState.cached && <Btn variant="sm primary" onClick={loadDevice}>Baixar agora</Btn>}
+            {devState.err && <p style={{ color: 'var(--bad)', fontSize: 13 }}>⚠ {devState.err}. Se continuar, use o modo Copilot.</p>}
+          </div>
+        </Card> : engine === 'local' ? <Card title="IA local · Ollama" sub={models === undefined ? 'verificando…' : models ? '● pronta' : '○ não encontrada'}>
           {models === null && <div className="ai-steps">
             <p className="muted">Roda no seu computador, sem internet e sem custo. Não precisa treinar nada — o modelo já vem pronto.</p>
             <ol><li><a href="https://ollama.com/download/windows" target="_blank" rel="noreferrer">Baixe o Ollama para Windows</a> e instale (normalmente não pede administrador; se a TI bloquear, use o modo Copilot).</li><li>Abra o Ollama (fica perto do relógio).</li><li>Volte aqui e clique em <b>Verificar</b>.</li></ol>
@@ -110,8 +133,8 @@ export default function Assistant() {
           <div className="ai-steps"><p className="muted">Usa o Copilot que a empresa já libera. O Kairotec prepara a pergunta com o contexto das suas tarefas e agenda; você cola no Copilot e cola a resposta de volta.</p>
             <ol><li>Escreva o pedido ou clique num atalho.</li><li>Cole no Copilot (já fica copiado).</li><li>Cole a resposta aqui e aplique.</li></ol></div>
         </Card>}
-        <Card title="Privacidade" sub="">
-          <div className="muted" style={{ fontSize: 13, lineHeight: 1.6 }}>{engine === 'local' ? '🔒 Nada sai do seu computador.' : '🏢 O texto vai para o Copilot da sua conta da empresa, como qualquer conversa sua com ele.'} O assistente vê só tarefas abertas, agenda dos próximos 7 dias e — só quando você pede — as 5 notas mais recentes.</div>
+        <Card title="Privacidade" sub="" className="desk-only">
+          <div className="muted" style={{ fontSize: 13, lineHeight: 1.6 }}>{engine !== 'copilot' ? '🔒 Nada sai do seu aparelho.' : '🏢 O texto vai para o Copilot da sua conta da empresa, como qualquer conversa sua com ele.'} O assistente vê só tarefas abertas, agenda dos próximos 7 dias e — só quando você pede — as 5 notas mais recentes.</div>
         </Card>
       </div>
     </div>

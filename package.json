@@ -16,8 +16,15 @@
     "dist:win": "vite build && electron-builder --win --publish never"
   },
   "dependencies": {
+    "@blocknote/core": "^0.57.0",
+    "@blocknote/mantine": "^0.57.0",
+    "@blocknote/react": "^0.57.0",
+    "@blocknote/xl-multi-column": "^0.57.0",
     "@capacitor/android": "^6.2.3",
     "@capacitor/core": "^6.2.3",
+    "@mantine/core": "^8.3.18",
+    "@mantine/hooks": "^8.3.18",
+    "@mlc-ai/web-llm": "^0.2.89",
     "electron-updater": "^6.8.11",
     "exceljs": "^4.4.0",
     "framer-motion": "^14.14.0",
