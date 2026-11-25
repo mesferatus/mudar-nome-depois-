@@ -1,0 +1,54 @@
+name: App Android (.apk)
+# A cada atualização na branch principal: gera o Kairotec.apk e publica no Release "android".
+# O app Android abre o Kairotec publicado no GitHub Pages, então o conteúdo se atualiza sozinho
+# (não precisa reinstalar o APK a cada versão). Assinado sempre com a mesma chave, para permitir atualizar por cima.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: android
+  cancel-in-progress: true
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - run: npm ci
+      - run: npm test
+      - name: Endereço do app publicado
+        run: |
+          node -e "const f='capacitor.config.json',c=require('./'+f);c.server.url='https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/';require('fs').writeFileSync(f,JSON.stringify(c,null,2))"
+      - run: npx vite build
+        env:
+          PAGES_BASE: /${{ github.event.repository.name }}/
+      - run: npx cap add android
+      - run: npx @capacitor/assets generate --android
+      - run: npx cap sync android
+      - name: Chave fixa (para atualizar o APK por cima)
+        run: mkdir -p ~/.android && cp .github/android/debug.keystore ~/.android/debug.keystore
+      - name: Gerar APK
+        working-directory: android
+        run: ./gradlew assembleDebug --no-daemon
+      - run: cp android/app/build/outputs/apk/debug/app-debug.apk Kairotec.apk
+      - name: Publicar no Release "android"
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: android
+          name: Kairotec para Android
+          make_latest: false
+          body: |
+            📱 **Kairotec para Android** — baixe o `Kairotec.apk` e abra no celular.
+            O conteúdo do app se atualiza sozinho; o APK só precisa ser reinstalado raramente.
+            Se o Android avisar "app de fonte desconhecida", permita a instalação para o navegador/Arquivos.
+          files: Kairotec.apk

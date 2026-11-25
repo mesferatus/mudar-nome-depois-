@@ -1,0 +1,10 @@
+{
+  "appId": "com.kairotec.app",
+  "appName": "Kairotec",
+  "webDir": "dist",
+  "server": {
+    "url": "https://mesferatus.github.io/mudar-nome-depois-/",
+    "androidScheme": "https"
+  },
+  "android": { "backgroundColor": "#0b0806" }
+}
