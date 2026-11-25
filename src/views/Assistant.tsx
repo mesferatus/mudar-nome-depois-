@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useStore } from '../lib/store'
 import { Btn, Card, Icon, Page, Seg, spring } from '../components/ui'
-import { applyActions, copilotPrompt, describe, deviceAsk, deviceCached, deviceLoad, deviceReady, deviceSupported, DEVICE_MODELS, ollamaAsk, ollamaModels, ollamaPull, parseReply, PRESETS, SUGGESTED_MODEL, type Action } from '../lib/ai'
+import { applyActions, copilotPrompt, describe, deviceAsk, deviceCached, deviceLoad, deviceReady, deviceSupported, DEVICE_MODELS, defaultDeviceModel, ollamaAsk, ollamaModels, ollamaPull, parseReply, PRESETS, SUGGESTED_MODEL, type Action } from '../lib/ai'
 
 type Engine = 'aparelho' | 'local' | 'copilot'
 const isPhone = () => matchMedia('(max-width: 760px), (pointer: coarse)').matches
@@ -17,7 +17,7 @@ export default function Assistant() {
     if (e === 'copilot' || (e === 'aparelho' && deviceSupported()) || (e === 'local' && !isPhone())) return e
     return deviceSupported() ? 'aparelho' : 'copilot'
   })
-  const [devModel, setDevModel] = useState(() => store.get('kairotec:ai-device') || (isPhone() ? DEVICE_MODELS[1].id : DEVICE_MODELS[0].id))
+  const [devModel, setDevModel] = useState(defaultDeviceModel)
   const [devState, setDevState] = useState<{ pct?: number; text?: string; cached?: boolean; err?: string }>({})
   const [models, setModels] = useState<string[] | null | undefined>(undefined) // undefined = verificando, null = Ollama não encontrado
   const [model, setModel] = useState(() => store.get('kairotec:ai-model') || SUGGESTED_MODEL)
@@ -34,6 +34,10 @@ export default function Assistant() {
   }, [engine])
   useEffect(() => { store.set('kairotec:ai-engine', engine); store.set('kairotec:ai-model', model); store.set('kairotec:ai-device', devModel) }, [engine, model, devModel])
   useEffect(() => { if (engine === 'aparelho') deviceCached(devModel).then(c => setDevState(s => ({ ...s, cached: c || deviceReady(devModel) }))) }, [engine, devModel])
+  useEffect(() => {
+    const h = (e: Event) => { const d = (e as CustomEvent<{ pct?: number; done?: boolean; err?: string }>).detail; setDevState(d.done ? { cached: true } : d.err ? { err: d.err } : { pct: d.pct }) }
+    window.addEventListener('kairotec:ai-progress', h); return () => window.removeEventListener('kairotec:ai-progress', h)
+  }, [])
   const loadDevice = async () => {
     setDevState({ pct: 0, text: 'Preparando…' })
     try { await deviceLoad(devModel, (pct, text) => setDevState({ pct, text })); setDevState({ cached: true }); return true }
@@ -113,7 +117,7 @@ export default function Assistant() {
           <div className="ai-steps">
             <p className="muted">Roda aqui dentro, de graça e sem internet depois de baixada. Funciona no PC e no celular.</p>
             <div className="field"><label>Modelo</label><select className="input" value={devModel} onChange={e => setDevModel(e.target.value)}>{DEVICE_MODELS.map(m => <option key={m.id} value={m.id}>{m.l} · {m.size}</option>)}</select></div>
-            {devState.pct !== undefined ? <div><div className="ai-bar"><i style={{ width: `${devState.pct}%` }} /></div><small className="muted">{devState.pct}% · baixando (só na primeira vez)</small></div>
+            {devState.pct !== undefined ? <div><div className="ai-bar"><i style={{ width: `${devState.pct}%` }} /></div><small className="muted">{devState.pct}% · preparando sozinha no Wi-Fi (só na primeira vez)</small></div>
               : !devState.cached && <Btn variant="sm primary" onClick={loadDevice}>Baixar agora</Btn>}
             {devState.err && <p style={{ color: 'var(--bad)', fontSize: 13 }}>⚠ {devState.err}. Se continuar, use o modo Copilot.</p>}
           </div>

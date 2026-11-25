@@ -10,6 +10,7 @@ import { syncOutlook, syncIcsUrl } from './lib/integrations'
 import { Onboarding } from './components/Onboarding'
 import { FocusTimer } from './components/FocusTimer'
 import { useReminders } from './lib/reminders'
+import { autoPrepareAI } from './lib/ai'
 import Dashboard from './views/Dashboard'
 import Calendar from './views/Calendar'
 import Board from './views/Board'
@@ -136,18 +137,29 @@ function Shell() {
   const Cur = cur.C
   useEffect(() => { document.title = `${cur.l} · Kairotec` }, [cur.l])
   const overdue = data.tasks.filter(t => t.status !== 'done' && t.due && t.due < new Date().toISOString().slice(0, 10)).length
+  const [more, setMore] = useState(false)
+  useEffect(() => { if (!data.settings.onboarded) return; const t = setTimeout(() => { autoPrepareAI() }, 5000); return () => clearTimeout(t) }, [data.settings.onboarded])
   const hello = (() => { const h = new Date().getHours(); return h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite' })()
 
   return <div className={`app ${compact ? 'compact' : ''}`}>
     {window.kairotecDesktop && <div className="titlebar"><span>kairotec<i>.</i></span></div>}
     <header className="topbar">
-      <Logo size={38} />
-      <div className="t"><b>kairotec<span style={{ color: 'var(--accent)' }}>.</span></b><span>{hello}</span></div>
-      <motion.button whileTap={{ scale: .9 }} className="btn icon" aria-label="Assistente" onClick={() => setView('assistente')}><Icon n="spark" /></motion.button>
-      <motion.button whileTap={{ scale: .9 }} className="btn icon" aria-label="Insights" onClick={() => setView('insights')}><Icon n="chart" /></motion.button>
-      <motion.button whileTap={{ scale: .9 }} className="btn icon" aria-label="Rotinas" onClick={() => setView('rotinas')}><Icon n="bolt" /></motion.button>
-      <motion.button whileTap={{ scale: .9 }} className="btn icon" aria-label="Ajustes" onClick={() => setView('ajustes')}><Icon n="gear" /></motion.button>
+      <Logo size={40} />
+      <div className="t"><b>kairotec<span style={{ color: 'var(--accent)' }}>.</span></b><span>{hello}{data.settings.userName ? `, ${data.settings.userName.split(' ')[0]}` : ''}</span></div>
+      <motion.button whileTap={{ scale: .88 }} className="tb-ai" aria-label="Assistente" onClick={() => setView('assistente')}>
+        <motion.span animate={{ rotate: [0, 14, -10, 0], scale: [1, 1.12, 1] }} transition={{ repeat: Infinity, duration: 3.2, repeatDelay: 1.4 }}><Icon n="spark" /></motion.span></motion.button>
+      <motion.button whileTap={{ scale: .88 }} className={`tb-me ${more ? 'on' : ''}`} aria-label="Mais" onClick={() => setMore(m => !m)}>
+        {(data.settings.userName || 'K').trim()[0].toUpperCase()}</motion.button>
     </header>
+    <AnimatePresence>{more && <motion.div className="sheet-bg" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setMore(false)}>
+      <motion.div className="sheet" initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', stiffness: 380, damping: 34 }}
+        drag="y" dragConstraints={{ top: 0, bottom: 0 }} dragElastic={{ top: 0, bottom: .5 }} onDragEnd={(_, i) => i.offset.y > 80 && setMore(false)} onClick={e => e.stopPropagation()}>
+        <div className="sheet-grab" />
+        <div className="sheet-grid">{MORE.map((m, i) => <motion.button key={m.id} className="sheet-it" aria-label={m.l}
+          initial={{ opacity: 0, y: 18, scale: .94 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ ...spring, delay: .05 + i * .05 }} whileTap={{ scale: .95 }}
+          onClick={() => { setView(m.id); setMore(false) }}>
+          <span className="sheet-ic" style={{ background: m.bg }}><Icon n={m.icon} /></span><b>{m.l}</b><small>{m.d}</small></motion.button>)}</div>
+      </motion.div></motion.div>}</AnimatePresence>
     <nav className="side">
       <div className="brand"><Logo size={34} /><b>kairotec<i>.</i></b><button className="collapse" onClick={() => setCompact(c => !c)} aria-label={compact ? 'Expandir menu' : 'Recolher menu'} title={compact ? 'Expandir menu' : 'Recolher menu'}><Icon n={compact ? 'right' : 'left'} s={14} /></button></div>
       <button className="nav search" onClick={() => setPal(true)}><span className="ico"><Icon n="search" /></span><span className="lbl">Buscar</span><kbd>Ctrl K</kbd></button>
@@ -173,6 +185,13 @@ function Shell() {
     <div className="toasts"><AnimatePresence>{toasts.map(t => <motion.div key={t.id} className="toast" layout initial={{ opacity: 0, y: 20, scale: .9 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 10, scale: .95 }} transition={spring}>{t.msg}{t.action && <button className="toast-act" onClick={() => t.action!.run()}>{t.action.label}</button>}</motion.div>)}</AnimatePresence></div>
   </div>
 }
+
+const MORE = [
+  { id: 'assistente', l: 'Assistente', d: 'IA que organiza pra você', icon: 'spark', bg: 'linear-gradient(135deg, #c9a7ff, #8a5cf6)' },
+  { id: 'insights', l: 'Insights', d: 'Seu BI pessoal', icon: 'chart', bg: 'linear-gradient(135deg, #8fb8ff, #4f7fe8)' },
+  { id: 'rotinas', l: 'Rotinas', d: 'Hábitos e recorrências', icon: 'bolt', bg: 'linear-gradient(135deg, #ffc27a, #f0884a)' },
+  { id: 'ajustes', l: 'Ajustes', d: 'Tema, conexões, dados', icon: 'gear', bg: 'linear-gradient(135deg, #b9b2ad, #7d726c)' },
+] as const
 
 export default function App() {
   return <MotionConfig reducedMotion="user"><StoreProvider><EditorsProvider><Shell /></EditorsProvider></StoreProvider></MotionConfig>

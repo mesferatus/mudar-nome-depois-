@@ -60,7 +60,7 @@ export default function Settings() {
   return <Page>
     <div className="head"><div><h1>Ajustes</h1><p>Toque numa seção para abrir</p></div></div>
     <div className="settings-list">
-      <div className="sec-group">
+      <motion.div className="sec-group" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ type: 'spring', stiffness: 320, damping: 30, delay: 0.00 }}>
         <Sec id="voce" {...p} icon="👤" title="Você" sub={`${s.userName || 'Sem nome'} · semana começa ${s.weekStart ? 'segunda' : 'domingo'}`}>
           <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
           <div className="field"><label>Seu nome</label><input className="input" value={s.userName} onChange={e => setSettings({ userName: e.target.value })} placeholder="Como quer ser chamada?" /></div>
@@ -72,8 +72,8 @@ export default function Settings() {
           <div className="pv" style={{ background: t.c[0] }}><div style={{ background: t.c[1] }} /><div style={{ padding: 8, display: 'grid', gap: 5, alignContent: 'start' }}><i style={{ height: 6, width: '60%', borderRadius: 4, background: t.c[2] }} /><i style={{ height: 6, width: '80%', borderRadius: 4, background: t.c[1] }} /><i style={{ height: 6, width: '40%', borderRadius: 4, background: t.c[1] }} /></div></div>
           <b style={{ fontSize: 13 }}>{t.name}</b></button>)}</div>
         </Sec>
-      </div>
-      <div className="sec-group">
+      </motion.div>
+      <motion.div className="sec-group" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ type: 'spring', stiffness: 320, damping: 30, delay: 0.06 }}>
         <Sec id="conexoes" {...p} icon="🔗" title="Conexões" sub="Outlook, celular, Notion e app de desktop"><Connections /></Sec>
         <Sec id="sync" {...p} icon="🔄" title="Sincronizar aparelhos" sub={syncConnected() ? (sync.cloudSync === 'erro' ? '⚠ erro' : '● ligado') : 'desligado'}>
           {syncConnected() ? <div className="list-row"><span style={{ fontSize: 18 }}>🔄</span><div style={{ flex: 1 }}><b>Sincronização ligada</b><div className="muted" style={{ fontSize: 12 }}>PC, celular e o app instalado ficam iguais sozinhos (envia ao salvar, busca ao abrir).</div></div>
@@ -107,8 +107,8 @@ export default function Settings() {
         </div>
         <div className="muted" style={{ fontSize: 12, marginTop: 8 }}>Dica: se a planilha estiver aberta no Excel o Windows bloqueia a gravação; o app avisa e tenta de novo na próxima alteração.</div>
         </Sec>
-      </div>
-      <div className="sec-group">
+      </motion.div>
+      <motion.div className="sec-group" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ type: 'spring', stiffness: 320, damping: 30, delay: 0.12 }}>
         <Sec id="projetos" {...p} icon="🗂️" title="Projetos" sub={`${data.projects.length} ${data.projects.length === 1 ? 'projeto' : 'projetos'}`}>
           {data.projects.map(p => <div key={p.id} className="list-row">
           <input type="color" value={p.color} onChange={e => upsertProject({ id: p.id, color: e.target.value })} style={{ width: 28, height: 28, border: 0, background: 'none', padding: 0 }} />
@@ -143,7 +143,7 @@ export default function Settings() {
           <Btn variant="ghost" style={{ color: 'var(--bad)', marginLeft: 'auto' }} onClick={() => { if (confirm('Apagar TODOS os dados locais? (o arquivo de nuvem não é apagado)')) { localStorage.removeItem('kairotec:data'); location.reload() } }}>Resetar app</Btn>
         </div>
         </Sec>
-      </div>
+      </motion.div>
     </div>
   </Page>
 }
