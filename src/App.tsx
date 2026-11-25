@@ -40,6 +40,8 @@ function Palette({ open, close, go }: { open: boolean; close: () => void; go: (v
       { l: 'Nova tarefa', h: 'ação', run: () => quick({ kind: 'task' }) },
       { l: 'Novo evento', h: 'ação', run: () => quick({ kind: 'event' }) },
       { l: 'Nova nota', h: 'ação', run: () => quick({ kind: 'note' }) },
+      { l: 'Próxima aba', h: ']', run: () => window.dispatchEvent(new KeyboardEvent('keydown', { key: ']' })) },
+      { l: 'Aba anterior', h: '[', run: () => window.dispatchEvent(new KeyboardEvent('keydown', { key: '[' })) },
       ...NAV.map(n => ({ l: `Ir para ${n.l}`, h: `Alt+${n.k}`, run: () => go(n.id) })),
       ...THEMES.map(t => ({ l: `Tema: ${t.name}`, h: 'tema', run: () => setSettings({ theme: t.id }) })),
       ...data.tasks.map(t => ({ l: t.title, h: 'tarefa', run: () => editTask(t) })),
@@ -128,6 +130,10 @@ function Shell() {
       }
       if (e.altKey && /^[1-8]$/.test(e.key)) { e.preventDefault(); setView(NAV[Number(e.key) - 1].id) }
       const tag = (e.target as HTMLElement).tagName
+      // trocar de aba pelo teclado: [ e ] (ou Ctrl+PageUp/PageDown)
+      const step = (!typing && !e.ctrlKey && !e.metaKey && !e.altKey && (e.key === '[' || e.key === ']')) ? (e.key === ']' ? 1 : -1)
+        : (e.ctrlKey && (e.key === 'PageDown' || e.key === 'PageUp')) ? (e.key === 'PageDown' ? 1 : -1) : 0
+      if (step) { e.preventDefault(); setView(v => NAV[(NAV.findIndex(n => n.id === v) + step + NAV.length) % NAV.length].id) }
       if (e.key === 'n' && !e.ctrlKey && !e.metaKey && !e.altKey && !['INPUT', 'TEXTAREA', 'SELECT'].includes(tag)) { e.preventDefault(); quick() }
     }
     window.addEventListener('keydown', h); return () => window.removeEventListener('keydown', h)
@@ -138,6 +144,26 @@ function Shell() {
   useEffect(() => { document.title = `${cur.l} · Kairotec` }, [cur.l])
   const overdue = data.tasks.filter(t => t.status !== 'done' && t.due && t.due < new Date().toISOString().slice(0, 10)).length
   const [more, setMore] = useState(false)
+  // abertura animada (PC e celular), uma vez por abertura do app
+  const [splash, setSplash] = useState(() => { try { return !sessionStorage.getItem('kairotec:splash') && !matchMedia('(prefers-reduced-motion: reduce)').matches } catch { return false } })
+  useEffect(() => { if (!splash) return; try { sessionStorage.setItem('kairotec:splash', '1') } catch { /* ignore */ } const t = setTimeout(() => setSplash(false), 1250); return () => clearTimeout(t) }, [splash])
+  // celular: deslizar para os lados troca entre as 4 abas principais
+  const touch = useRef<{ x: number; y: number; t: number; ok: boolean } | null>(null)
+  const onTouchStart = (e: React.TouchEvent) => {
+    const el = e.target as HTMLElement, p = e.touches[0]
+    const ok = e.touches.length === 1 && !el.closest('input, textarea, select, [contenteditable="true"], .tcard, .bn-wrap, .noswipe, .mcal, .xl, .wk, .modal, .sheet') && p.clientX > 24 && p.clientX < innerWidth - 24
+    touch.current = { x: p.clientX, y: p.clientY, t: Date.now(), ok }
+  }
+  const onTouchEnd = (e: React.TouchEvent) => {
+    const s0 = touch.current; touch.current = null
+    if (!s0?.ok) return
+    const p = e.changedTouches[0], dx = p.clientX - s0.x, dy = p.clientY - s0.y
+    if (Math.abs(dx) < 70 || Math.abs(dy) > Math.abs(dx) * .6 || Date.now() - s0.t > 600) return
+    const main = NAV.slice(0, 4), i = main.findIndex(n => n.id === view)
+    if (i < 0) return
+    const j = i + (dx < 0 ? 1 : -1)
+    if (j >= 0 && j < main.length) { setView(main[j].id); navigator.vibrate?.(8) }
+  }
   const order = NAV.findIndex(n => n.id === view)
   const prev = useRef(order)
   const dir = order >= prev.current ? 1 : -1
@@ -146,6 +172,11 @@ function Shell() {
   const hello = (() => { const h = new Date().getHours(); return h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite' })()
 
   return <div className={`app ${compact ? 'compact' : ''}`}>
+    <AnimatePresence>{splash && <motion.div className="splash" exit={{ opacity: 0, transition: { duration: .35 } }} onClick={() => setSplash(false)}>
+      <motion.div initial={{ scale: .6, opacity: 0, rotate: -8 }} animate={{ scale: 1, opacity: 1, rotate: 0 }} transition={{ type: 'spring', stiffness: 260, damping: 16 }}><Logo size={96} /></motion.div>
+      <motion.b initial={{ opacity: 0, y: 12, letterSpacing: '.2em' }} animate={{ opacity: 1, y: 0, letterSpacing: '-.03em' }} transition={{ delay: .25, duration: .6, ease: [.2, .8, .2, 1] }}>kairotec<span>.</span></motion.b>
+      <motion.small initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: .55 }}>{hello}{data.settings.userName ? `, ${data.settings.userName.split(' ')[0]}` : ''} ✨</motion.small>
+    </motion.div>}</AnimatePresence>
     {window.kairotecDesktop && <div className="titlebar"><span>kairotec<i>.</i></span></div>}
     <header className="topbar">
       <Logo size={40} />
@@ -180,7 +211,7 @@ function Shell() {
         {sync.status === 'error' ? 'Erro ao sincronizar' : sync.cloudName || sync.excelName ? (sync.lastSaved ? `Sincronizado ${sync.lastSaved}` : 'Conectado') : window.kairotecDesktop ? 'Só neste computador' : 'Só neste navegador'}
       </div>
     </nav>
-    <main className="main"><AnimatePresence mode="wait" custom={dir}><motion.div key={view} custom={dir} variants={SLIDE} initial="in" animate="on" exit="out" transition={{ type: 'spring', stiffness: 420, damping: 36 }} style={{ height: view === 'notas' ? '100%' : undefined }}><Cur /></motion.div></AnimatePresence></main>
+    <main className="main" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}><AnimatePresence mode="wait" custom={dir}><motion.div key={view} custom={dir} variants={SLIDE} initial="in" animate="on" exit="out" transition={{ type: 'spring', stiffness: 420, damping: 36 }} style={{ height: view === 'notas' ? '100%' : undefined }}><Cur /></motion.div></AnimatePresence></main>
     {!['ajustes', 'notas'].includes(view) && <motion.button className="fab" onClick={() => quick({ kind: view === 'calendario' ? 'event' : 'task' })} initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} whileHover={{ y: -2 }} whileTap={{ scale: .92 }} transition={spring} aria-label="Novo" title="Criar (tecla N)">
       <Icon n="plus" s={20} /> Novo</motion.button>}
     <FocusTimer />
