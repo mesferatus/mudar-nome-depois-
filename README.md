@@ -37,6 +37,16 @@ Atalhos: `Ctrl+K` paleta de comandos · `Alt+1…7` trocar de aba · `N` nova ta
 - **Outlook:** Ajustes → Integrações → importar `.ics`
 - **Lembretes:** notificação 10 min antes dos eventos e resumo das entregas do dia
 
+## Assistente (IA grátis)
+
+- **Local (Ollama):** roda no seu PC, sem internet nem custo. Instale o Ollama e, no Assistente, clique em *Baixar qwen2.5:3b* (uma vez, ~2 GB).
+- **Copilot da empresa:** o Kairotec monta a pergunta com o contexto; você cola no Copilot e cola a resposta de volta.
+- Atalhos: planejar a semana, o que está em risco, quebrar entrega em passos, notas → tarefas, status para o gestor. A IA só **propõe** — você marca o que aplicar (e Ctrl+Z desfaz).
+
+## Atalhos
+
+`Ctrl+K` busca · `N` nova tarefa · `Ctrl+Z` / `Ctrl+Y` desfazer/refazer · `Alt+1…8` telas · no quadro: `Tab` seleciona, `← →` muda de coluna, `Espaço` conclui, `Enter` abre, `F` foco, `Delete` exclui · no .exe: `Ctrl+Alt+K` de qualquer lugar.
+
 ## Conexões (Ajustes)
 
 - **Outlook (app .exe):** lê a agenda do Outlook instalado no Windows — sem senha, sem TI. Liga “Sincronizar sozinho” e as reuniões entram a cada 15 min. Para o *novo Outlook*/web: assine o link ICS publicado.

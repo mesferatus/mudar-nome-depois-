@@ -52,6 +52,7 @@ export function BlockEditor({ value, onChange, onLink, onCreate, renderDb }: { v
   }
   const setType = (id: string, type: BType) => {
     const b = blocks[at(id)]
+    if (type === 'columns') { commit(blocks.map(x => x.id === id ? { ...x, type: 'columns', text: '', cols: [x.text.startsWith('/') ? '' : x.text, ''] } : x)); setEditing(null); return }
     if (type === 'dbview' && onCreate) { const dbId = onCreate('dbview'); commit(blocks.map(x => x.id === id ? { ...x, type: 'dbview', text: dbId } : x)); setEditing(null); return }
     if ((type === 'page' || type === 'database') && onCreate) { const title = onCreate(type); commit(blocks.map(x => x.id === id ? { ...x, type: 'p', text: `[[${title}]]` } : x)); setEditing(null); return }
     const extra: Partial<Block> = type === 'callout' ? { icon: b.icon ?? '💡' } : type === 'toggle' ? { open: true, body: b.body ?? '' } : {}
@@ -95,7 +96,7 @@ export function BlockEditor({ value, onChange, onLink, onCreate, renderDb }: { v
   const onText = (b: Block, text: string, el: HTMLTextAreaElement) => {
     grow(el)
     const sc = b.type === 'p' ? shortcut(text) : null
-    if (sc) { if (sc.type === 'divider') { commit(blocks.map(x => x.id === b.id ? { ...x, type: 'divider', text: '' } : x)); addAfter(b.id); return } patch(b.id, { type: sc.type, text: '', ...(sc.type === 'code' ? {} : {}) }); return }
+    if (sc) { if (sc.type === 'divider') { commit(blocks.map(x => x.id === b.id ? { ...x, type: 'divider', text: '' } : x)); addAfter(b.id); return } patch(b.id, { type: sc.type, text: '' }); go(b.id, 0); return }
     patch(b.id, { text })
     setSlash(text.startsWith('/') && !text.includes(' ') ? { id: b.id, i: 0 } : null)
   }
@@ -127,7 +128,14 @@ export function BlockEditor({ value, onChange, onLink, onCreate, renderDb }: { v
             <button onClick={() => wrap(b, '`')} className="mono">{'</>'}</button><button onClick={() => wrap(b, '==')} title="Marca-texto">🖍</button>
             {['vermelho', 'laranja', 'verde', 'azul', 'roxo', 'rosa'].map(c => <button key={c} title={c} onClick={() => wrap(b, `{${c}:`, '}')}><span className={`cdot tc-${c}`}>●</span></button>)}<button onClick={() => wrap(b, '[[', ']]')}>🔗 Página</button>
           </motion.div>}</AnimatePresence>
-          {b.type === 'dbview' ? <div className="bdb">{renderDb?.(b.text) ?? <span className="muted">Banco de dados não encontrado</span>}</div> :
+          {b.type === 'columns' ? <div className="bcols" style={{ gridTemplateColumns: `repeat(${b.cols?.length ?? 2}, minmax(0, 1fr))` }}>
+            {(b.cols ?? ['', '']).map((c, k) => <div key={k} className="bcol">
+              <BlockEditor value={c} onChange={md => patch(b.id, { cols: (b.cols ?? ['', '']).map((x, j) => j === k ? md : x) })} onLink={onLink} onCreate={onCreate} renderDb={renderDb} />
+              {(b.cols?.length ?? 2) > 1 && <button className="bcol-x" title="Remover coluna" onClick={() => { const cols = (b.cols ?? []).filter((_, j) => j !== k); commit(cols.length === 1 ? blocks.map(x => x.id === b.id ? { ...x, type: 'p', text: '', cols: undefined } : x) : blocks.map(x => x.id === b.id ? { ...x, cols } : x)) }}>✕</button>}
+            </div>)}
+            {(b.cols?.length ?? 2) < 3 && <button className="bcol-add" title="Adicionar coluna" onClick={() => patch(b.id, { cols: [...(b.cols ?? ['', '']), ''] })}>+</button>}
+          </div> :
+          b.type === 'dbview' ? <div className="bdb">{renderDb?.(b.text) ?? <span className="muted">Banco de dados não encontrado</span>}</div> :
           b.type === 'image' ? (b.text ? <figure className="bimg"><img src={b.text} alt={b.body ?? ''} /><button className="bimg-x" onClick={() => patch(b.id, { text: '' })}>Trocar</button></figure> :
             <div className="bimg-up"><span>🖼</span><label className="btn sm">Enviar imagem<input type="file" accept="image/*" hidden onChange={e => {
               const f = e.target.files?.[0]; if (!f) return

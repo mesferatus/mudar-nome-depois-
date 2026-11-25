@@ -13,24 +13,23 @@ const nextWd = (wd: number) => { const b = new Date(); let d = (wd - b.getDay() 
  * Criação rápida: um campo só. O texto é interpretado enquanto você digita
  * (data, horário, #projeto, !prioridade, ~horas) e os atalhos abaixo ajustam o resto.
  */
-export function QuickAdd({ open, preset, close, more }: {
-  open: boolean; preset?: { kind?: Kind; date?: string }; close: () => void
+export function QuickAdd({ n = 0, open, preset, close, more }: {
+  n?: number; open: boolean; preset?: { kind?: Kind; date?: string }; close: () => void
   more: (kind: Kind, fields: Record<string, unknown>) => void
 }) {
   const { data, upsertTask, upsertEvent, upsertNote, toast } = useStore()
   const [text, setText] = useState('')
-  const [kind, setKind] = useState<Kind | null>(null)
-  const [date, setDate] = useState<string | undefined>()
+  const [kind, setKind] = useState<Kind | null>(preset?.kind ?? null)
+  const [date, setDate] = useState<string | undefined>(preset?.date)
   const [proj, setProj] = useState<string | undefined>()
   const [prio, setPrio] = useState<Priority | undefined>()
   const [time, setTime] = useState<string | undefined>()
   const ref = useRef<HTMLInputElement>(null)
 
-  useEffect(() => {
-    if (!open) return
-    setText(''); setKind(preset?.kind ?? null); setDate(preset?.date); setProj(undefined); setPrio(undefined); setTime(undefined)
-    requestAnimationFrame(() => ref.current?.focus())
-  }, [open, preset])
+  // cada abertura começa limpa — zera no próprio render (sem esperar efeito), para não perder o que for digitado
+  const [seen, setSeen] = useState(n)
+  if (seen !== n) { setSeen(n); setText(''); setKind(preset?.kind ?? null); setDate(preset?.date); setProj(undefined); setPrio(undefined); setTime(undefined) }
+  useEffect(() => { if (open) ref.current?.focus() }, [open, n])
 
   const p = useMemo(() => parseQuick(text, data.projects), [text, data.projects])
   const k: Kind = kind ?? p.kind

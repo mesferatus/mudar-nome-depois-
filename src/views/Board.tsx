@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '../lib/store'
 import { Page, Icon, Seg, spring, Empty, DoneToggle, useIsMobile } from '../components/ui'
 import { useEditors } from '../components/editors'
-import type { Status } from '../lib/types'
+import type { Status, Task } from '../lib/types'
 import { STATUS_LABEL } from '../lib/types'
 import { fmt, today, daysBetween, iso, addDays, parse } from '../lib/date'
 
@@ -12,7 +12,7 @@ const CC: Record<Status, string> = { todo: 'var(--faint)', doing: 'var(--info)',
 const PR = { alta: 'var(--bad)', media: 'var(--warn)', baixa: 'var(--muted)' }
 
 export default function Board() {
-  const { data, upsertTask, toast, startTimer } = useStore(); const { editTask, quick } = useEditors()
+  const { data, upsertTask, removeTask, toast, startTimer } = useStore(); const { editTask, quick } = useEditors()
   const [over, setOver] = useState<Status>()
   const [pf, setPf] = useState<string>('all')
   const [view, setView] = useState<'quadro' | 'lista'>('quadro')
@@ -21,6 +21,24 @@ export default function Board() {
   const mobile = useIsMobile()
   const tasks = data.tasks.filter(x => (pf === 'all' || x.projectId === pf) && x.title.toLowerCase().includes(q.toLowerCase()))
   const proj = (id?: string) => data.projects.find(p => p.id === id)
+  // o cartão muda de coluna (e é recriado na animação): tenta focar algumas vezes até ele existir
+  const focusTask = (id: string, st?: Status) => [30, 120, 300, 600].forEach(ms => setTimeout(() => {
+    const el = document.querySelector<HTMLElement>(`${st ? `.col[data-status="${st}"] ` : ''}.tcard[data-task="${id}"]`); if (el && document.activeElement !== el) el.focus()
+  }, ms))
+  // teclado: ←/→ muda de coluna, ↑/↓ navega, Espaço conclui, Enter abre, Delete exclui, F inicia foco
+  const onCardKey = (e: React.KeyboardEvent, x: Task, s: Status, items: Task[]) => {
+    const i = COLS.indexOf(s), k = items.findIndex(t => t.id === x.id)
+    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+      e.preventDefault(); const ni = i + (e.key === 'ArrowRight' ? 1 : -1); if (ni < 0 || ni >= COLS.length) return
+      upsertTask({ id: x.id, status: COLS[ni] }); toast(`→ ${STATUS_LABEL[COLS[ni]]}`); focusTask(x.id, COLS[ni])
+    } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault(); const n = items[k + (e.key === 'ArrowDown' ? 1 : -1)]; if (n) focusTask(n.id)
+    } else if (e.key === ' ') {
+      e.preventDefault(); upsertTask({ id: x.id, status: s === 'done' ? 'todo' : 'done' }); toast(s === 'done' ? 'Reaberta' : 'Concluída ✓'); focusTask(x.id, s === 'done' ? 'todo' : 'done')
+    } else if (e.key === 'Enter') { e.preventDefault(); editTask(x) }
+    else if (e.key === 'Delete') { e.preventDefault(); const n = items[k + 1] ?? items[k - 1]; removeTask(x.id); if (n) focusTask(n.id) }
+    else if (e.key.toLowerCase() === 'f' && s !== 'done') { e.preventDefault(); startTimer(x.id); toast('Foco iniciado 🍅') }
+  }
 
   const Due = ({ due, done }: { due?: string; done: boolean }) => {
     if (!due) return null
@@ -29,7 +47,7 @@ export default function Board() {
   }
 
   return <Page wide>
-    <div className="head"><div><h1>Entregas</h1><p>Quadro de tarefas — arraste entre colunas</p></div><div className="sp" />
+    <div className="head"><div><h1>Entregas</h1><p>Arraste entre colunas · ou pelo teclado: Tab seleciona, ← → move, Espaço conclui</p></div><div className="sp" />
       <input className="input" placeholder="Filtrar…" value={q} onChange={e => setQ(e.target.value)} style={{ width: 180 }} />
       <select className="input" value={pf} onChange={e => setPf(e.target.value)} style={{ width: 170 }}><option value="all">Todos os projetos</option>{data.projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select>
       <Seg value={view} onChange={setView} options={[{ v: 'quadro', l: 'Quadro' }, { v: 'lista', l: 'Lista' }]} />
@@ -37,7 +55,7 @@ export default function Board() {
 
     <div className="fill">{view === 'quadro' ? <div className="board">{COLS.map(s => {
       const items = tasks.filter(x => x.status === s).sort((a, b) => (a.due ?? '9').localeCompare(b.due ?? '9'))
-      return <div key={s} className={`col ${over === s ? 'drop' : ''}`} onDragOver={e => { e.preventDefault(); setOver(s) }} onDragLeave={() => setOver(undefined)}
+      return <div key={s} data-status={s} className={`col ${over === s ? 'drop' : ''}`} onDragOver={e => { e.preventDefault(); setOver(s) }} onDragLeave={() => setOver(undefined)}
         onDrop={e => { setOver(undefined); upsertTask({ id: e.dataTransfer.getData('text'), status: s }) }}>
         <div className="col-h"><span className="dot" style={{ background: CC[s] }} />{STATUS_LABEL[s]}<span className="muted" style={{ fontWeight: 500 }}>{items.length}</span>
           <button className="btn ghost sm" style={{ marginLeft: 'auto' }} onClick={() => s === 'todo' ? quick({ kind: 'task' }) : editTask({ status: s, start: t })}><Icon n="plus" s={14} /></button></div>
@@ -46,7 +64,8 @@ export default function Board() {
             if (i.offset.x > 90) { upsertTask({ id: x.id, status: s === 'done' ? 'todo' : 'done' }); toast(s === 'done' ? 'Reaberta' : 'Concluída ✓') }
             else if (i.offset.x < -90) { const nd = iso(addDays(parse(x.due ?? today()), 1)); upsertTask({ id: x.id, due: nd }); toast(`Adiada para ${fmt(nd)}`) }
           } } : {})}>
-          <div className="tcard" draggable onDragStart={e => e.dataTransfer.setData('text', x.id)} onClick={() => editTask(x)}>
+          <div className="tcard" data-task={x.id} tabIndex={0} role="button" aria-label={`${x.title} — ${STATUS_LABEL[s]}. Setas ← → mudam a coluna, Espaço conclui, Enter abre`}
+            draggable onDragStart={e => e.dataTransfer.setData('text', x.id)} onClick={() => editTask(x)} onKeyDown={e => onCardKey(e, x, s, items)}>
             <DoneToggle done={s === 'done'} color={proj(x.projectId)?.color} onToggle={() => { upsertTask({ id: x.id, status: s === 'done' ? 'todo' : 'done' }); if (s !== 'done') toast('Concluída ✓') }} />
             <div className="body">
             <div className="t" style={{ textDecoration: s === 'done' ? 'line-through' : undefined, opacity: s === 'done' ? .65 : 1 }}>{x.title}</div>

@@ -9,6 +9,7 @@ const P: Record<string, string> = {
   grid: 'M3 4h18v16H3zM3 9h18M3 14h18M9 4v16M15 4v16',
   board: 'M4 4h5v16H4zM10 4h5v10h-5zM16 4h4v13h-4z',
   note: 'M6 3h9l4 4v14H6zM14 3v5h5M9 13h7M9 17h5',
+  spark: 'M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z',
   chart: 'M4 20V10M10 20V4M16 20v-7M22 20H2',
   bolt: 'M13 2L4 14h7l-1 8 9-12h-7z',
   gear: 'M12 15a3 3 0 100-6 3 3 0 000 6zM19 12l2-1-2-4-2 1-2-2V4h-4v2L9 8 7 7 5 11l2 1v0l-2 1 2 4 2-1 2 2v2h4v-2l2-2 2 1 2-4z',

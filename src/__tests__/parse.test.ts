@@ -40,12 +40,20 @@ describe('recorrência', () => {
     expect(parseQuick('Reunião de status toda segunda', P, NOW)).toMatchObject({ repeat: 'semanal', date: '2026-11-30', title: 'Reunião de status' })
   })
   it('todo dia', () => { expect(parseQuick('Conferir OTIF todo dia', P, NOW)).toMatchObject({ repeat: 'diaria', title: 'Conferir OTIF' }) })
-  it('mensal', () => { expect(parseQuick('Fechamento mensal dia 30', P, NOW)).toMatchObject({ repeat: 'mensal', date: '2026-11-30' }) })
+  it('mensal', () => { expect(parseQuick('Fechamento todo mês dia 30', P, NOW)).toMatchObject({ repeat: 'mensal', date: '2026-11-30', title: 'Fechamento' }) })
 })
 
 describe('fim do evento', () => {
   it('evento às 23h termina 23:59, nunca com duração zero', () => {
     expect(parseQuick('Plantão hoje 23h', P, NOW)).toMatchObject({ start: '23:00', end: '23:59' })
     expect(parseQuick('Call 22h30', P, NOW)).toMatchObject({ start: '22:30', end: '23:30' })
+  })
+})
+
+describe('palavras do título não viram recorrência', () => {
+  it('"Relatório mensal" e "Reunião semanal" mantêm o título', () => {
+    const a = parseQuick('Relatório mensal sexta', P, NOW), b = parseQuick('Reunião semanal de BI amanhã 10h', P, NOW)
+    expect(a.title).toBe('Relatório mensal'); expect(a.repeat).toBeUndefined()
+    expect(b).toMatchObject({ title: 'Reunião semanal de BI', start: '10:00' }); expect(b.repeat).toBeUndefined()
   })
 })

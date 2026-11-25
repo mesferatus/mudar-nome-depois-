@@ -16,6 +16,7 @@ import Board from './views/Board'
 import Notes from './views/Notes'
 import Routines from './views/Routines'
 import Insights from './views/Insights'
+import Assistant from './views/Assistant'
 import Settings, { THEMES } from './views/Settings'
 
 const NAV = [
@@ -23,9 +24,10 @@ const NAV = [
   { id: 'calendario', l: 'Calendário', i: 'cal', k: '2', C: Calendar, mob: true },
   { id: 'entregas', l: 'Entregas', i: 'board', k: '3', C: Board, mob: true },
   { id: 'notas', l: 'Notas', i: 'note', k: '4', C: Notes, mob: true },
-  { id: 'insights', l: 'Insights', i: 'chart', k: '5', C: Insights, mob: false },
-  { id: 'rotinas', l: 'Rotinas', i: 'bolt', k: '6', C: Routines, mob: false },
-  { id: 'ajustes', l: 'Ajustes', i: 'gear', k: '7', C: Settings, mob: false },
+  { id: 'assistente', l: 'Assistente', i: 'spark', k: '5', C: Assistant, mob: false },
+  { id: 'insights', l: 'Insights', i: 'chart', k: '6', C: Insights, mob: false },
+  { id: 'rotinas', l: 'Rotinas', i: 'bolt', k: '7', C: Routines, mob: false },
+  { id: 'ajustes', l: 'Ajustes', i: 'gear', k: '8', C: Settings, mob: false },
 ]
 const LEGACY: Record<string, string> = { painel: 'inicio', planner: 'calendario', agenda: 'calendario' }
 
@@ -58,7 +60,7 @@ function Palette({ open, close, go }: { open: boolean; close: () => void; go: (v
 }
 
 function Shell() {
-  const { data, sync, toasts } = useStore(); const { quick } = useEditors()
+  const { data, sync, toasts, undo, redo } = useStore(); const { quick } = useEditors()
   const [view, setView] = useState(() => { let v = 'inicio'; try { v = localStorage.getItem('kairotec:view') ?? 'inicio' } catch { /* ignore */ } return LEGACY[v] ?? (NAV.some(n => n.id === v) ? v : 'inicio') })
   const [pal, setPal] = useState(false)
   useReminders(data)
@@ -114,12 +116,21 @@ function Shell() {
   useEffect(() => { try { localStorage.setItem('kairotec:view', view) } catch { /* ignore */ } }, [view])
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
+      if (!live.current.settings.onboarded) return // boas-vindas aberta: sem atalhos
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); setPal(p => !p) }
-      if (e.altKey && /^[1-7]$/.test(e.key)) { e.preventDefault(); setView(NAV[Number(e.key) - 1].id) }
+      const typing = ['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement).tagName) || (e.target as HTMLElement).isContentEditable
+      if ((e.ctrlKey || e.metaKey) && !typing && (e.key.toLowerCase() === 'z' || e.key.toLowerCase() === 'y')) {
+        e.preventDefault()
+        const redoKey = e.key.toLowerCase() === 'y' || e.shiftKey
+        if (redoKey ? redo() : undo()) toast(redoKey ? 'Refeito ↷' : 'Desfeito ↶')
+        else toast(redoKey ? 'Nada para refazer' : 'Nada para desfazer')
+      }
+      if (e.altKey && /^[1-8]$/.test(e.key)) { e.preventDefault(); setView(NAV[Number(e.key) - 1].id) }
       const tag = (e.target as HTMLElement).tagName
       if (e.key === 'n' && !e.ctrlKey && !e.metaKey && !e.altKey && !['INPUT', 'TEXTAREA', 'SELECT'].includes(tag)) { e.preventDefault(); quick() }
     }
     window.addEventListener('keydown', h); return () => window.removeEventListener('keydown', h)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [quick])
   const cur = NAV.find(n => n.id === view) ?? NAV[0]
   const Cur = cur.C
@@ -132,6 +143,7 @@ function Shell() {
     <header className="topbar">
       <Logo size={44} />
       <div className="t"><b>kairotec<span style={{ color: 'var(--accent)' }}>.</span></b><span>{hello} · {new Date().toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' })}</span></div>
+      <motion.button whileTap={{ scale: .9 }} className="btn icon" aria-label="Assistente" onClick={() => setView('assistente')}><Icon n="spark" /></motion.button>
       <motion.button whileTap={{ scale: .9 }} className="btn icon" aria-label="Insights" onClick={() => setView('insights')}><Icon n="chart" /></motion.button>
       <motion.button whileTap={{ scale: .9 }} className="btn icon" aria-label="Rotinas" onClick={() => setView('rotinas')}><Icon n="bolt" /></motion.button>
       <motion.button whileTap={{ scale: .9 }} className="btn icon" aria-label="Ajustes" onClick={() => setView('ajustes')}><Icon n="gear" /></motion.button>
