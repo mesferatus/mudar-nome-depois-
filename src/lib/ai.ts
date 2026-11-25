@@ -199,3 +199,21 @@ export async function deviceAsk(model: string, d: Data, pedido: string, history:
   })
   return parseReply(r.choices[0]?.message?.content ?? '')
 }
+
+/** O aparelho consegue rodar a IA? (precisa de placa de vídeo acessível pelo navegador) */
+export async function deviceUsable() {
+  try { const gpu = (navigator as unknown as { gpu?: { requestAdapter: () => Promise<unknown> } }).gpu; return !!gpu && !!(await gpu.requestAdapter()) } catch { return false }
+}
+export const defaultDeviceModel = () => {
+  try { const m = localStorage.getItem('kairotec:ai-device'); if (m) return m } catch { /* ignore */ }
+  return matchMedia('(max-width: 760px), (pointer: coarse)').matches ? DEVICE_MODELS[1].id : DEVICE_MODELS[0].id
+}
+/** Prepara a IA sozinha em segundo plano (só no Wi-Fi), para ela já estar pronta quando você abrir o Assistente. */
+export async function autoPrepareAI() {
+  const conn = (navigator as unknown as { connection?: { type?: string; saveData?: boolean } }).connection
+  if (conn?.type === 'cellular' || conn?.saveData) return
+  if (!(await deviceUsable())) return
+  const model = defaultDeviceModel()
+  const emit = (detail: { pct?: number; done?: boolean; err?: string }) => window.dispatchEvent(new CustomEvent('kairotec:ai-progress', { detail }))
+  try { await deviceLoad(model, pct => emit({ pct })); emit({ done: true }) } catch (e) { emit({ err: (e as Error).message }) }
+}
