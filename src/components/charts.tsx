@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { useId, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 
 export function Donut({ parts, size = 150, label, sub }: { parts: { v: number; c: string; l: string }[]; size?: number; label: string; sub: string }) {
   const total = parts.reduce((s, p) => s + p.v, 0) || 1, r = size / 2 - 12, C = 2 * Math.PI * r
@@ -46,8 +46,15 @@ export function Burndown({ points, h = 160 }: { points: { ideal: number; real: n
 }
 
 /** Área suave com linha secundária e dica ao passar o mouse. */
-export function Area({ data, h = 130 }: { data: { label: string; a: number; b: number }[]; h?: number }) {
+export function Area({ data }: { data: { label: string; a: number; b: number }[] }) {
   const [hover, setHover] = useState<number | null>(null)
+  const box = useRef<HTMLDivElement>(null)
+  const [h, setH] = useState(130)
+  useEffect(() => {
+    const el = box.current; if (!el) return
+    const ro = new ResizeObserver(() => setH(Math.max(80, Math.min(240, el.clientHeight - 22))))
+    ro.observe(el); return () => ro.disconnect()
+  }, [])
   const w = 560, pad = 14, max = Math.max(1, ...data.map(d => Math.max(d.a, d.b)))
   const x = (i: number) => pad + (i / Math.max(1, data.length - 1)) * (w - pad * 2)
   const y = (v: number) => h - 22 - (v / max) * (h - 44)
@@ -58,7 +65,7 @@ export function Area({ data, h = 130 }: { data: { label: string; a: number; b: n
   }).join('')
   const lb = smooth(data.map(d => d.b)), la = smooth(data.map(d => d.a))
   const id = useId().replace(/:/g, '')
-  return <div style={{ position: 'relative' }} onMouseLeave={() => setHover(null)}>
+  return <div ref={box} style={{ position: 'relative', height: '100%', minHeight: 110 }} onMouseLeave={() => setHover(null)}>
     <svg viewBox={`0 0 ${w} ${h}`} width="100%" height={h} preserveAspectRatio="none"
       onMouseMove={e => { const r = e.currentTarget.getBoundingClientRect(); const i = Math.round(((e.clientX - r.left) / r.width * w - pad) / ((w - pad * 2) / Math.max(1, data.length - 1))); setHover(Math.max(0, Math.min(data.length - 1, i))) }}>
       <defs><linearGradient id={`a${id}`} x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="var(--accent)" stopOpacity=".35" /><stop offset="1" stopColor="var(--accent)" stopOpacity="0" /></linearGradient></defs>

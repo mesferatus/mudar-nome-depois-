@@ -42,3 +42,10 @@ describe('recorrência', () => {
   it('todo dia', () => { expect(parseQuick('Conferir OTIF todo dia', P, NOW)).toMatchObject({ repeat: 'diaria', title: 'Conferir OTIF' }) })
   it('mensal', () => { expect(parseQuick('Fechamento mensal dia 30', P, NOW)).toMatchObject({ repeat: 'mensal', date: '2026-11-30' }) })
 })
+
+describe('fim do evento', () => {
+  it('evento às 23h termina 23:59, nunca com duração zero', () => {
+    expect(parseQuick('Plantão hoje 23h', P, NOW)).toMatchObject({ start: '23:00', end: '23:59' })
+    expect(parseQuick('Call 22h30', P, NOW)).toMatchObject({ start: '22:30', end: '23:30' })
+  })
+})

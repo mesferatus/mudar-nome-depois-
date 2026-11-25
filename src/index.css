@@ -735,3 +735,32 @@ mark { background: color-mix(in srgb, var(--warn) 35%, transparent); color: inhe
 .cmt { display: flex; gap: 10px; align-items: flex-start; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; font-size: 14px; }
 .cmt.done { opacity: .5; } .cmt.done > div > div { text-decoration: line-through; }
 .cmt button { border: 0; background: none; color: var(--muted); cursor: pointer; border-radius: 7px; width: 26px; height: 26px; } .cmt button:hover { background: var(--hover); color: var(--text); }
+
+/* ===================================================================== correções de QA */
+/* gráficos e barras nunca saem do cartão */
+.card-b { overflow: hidden; }
+.card-b > .scroll { overflow: auto; }
+.ins-weeks { height: 100%; min-height: 120px; max-height: 200px; }
+.ins .card .card-b { display: flex; flex-direction: column; }
+.ins .card .card-b > .ins-weeks { flex: 1; }
+/* cabeçalho do calendário: título não quebra; subtítulo some quando falta espaço */
+.head h1 { white-space: nowrap; }
+@media (min-width: 900px) and (max-width: 1279px) { .head p { display: none; } .head { flex-wrap: wrap; } .head > div:first-child { flex: 1 1 auto; } }
+
+/* notebooks menores (largura < 1280 ou altura < 720): a página rola em vez de espremer */
+@media (min-width: 900px) and (max-width: 1279px), (min-width: 900px) and (max-height: 719px) {
+  .main { overflow-y: auto; }
+  .page { height: auto; min-height: 100%; }
+  .fill, .dash, .routines, .settings, .ins { flex: none; }
+  .dash { grid-template-columns: 1fr 1fr; grid-template-rows: none; grid-auto-rows: minmax(250px, auto); }
+  .dash-top { grid-template-columns: 1fr; }
+  .routines { grid-template-columns: 1fr; grid-template-rows: none; }
+  .routines .card { min-height: 220px; }
+  .ins { grid-template-columns: 1fr; grid-template-rows: none; grid-auto-rows: minmax(240px, auto); }
+  .ins-k { grid-template-columns: repeat(3, 1fr); }
+  .board { height: calc(100dvh - 150px); }
+  .settings { grid-template-columns: 1fr; overflow: visible; }
+  .settings > .col-s { overflow: visible; }
+  .notes { height: 100dvh; }
+  .planner-card { height: calc(100dvh - 150px); flex: none; }
+}

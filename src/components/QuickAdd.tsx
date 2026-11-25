@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useStore } from '../lib/store'
 import { parseQuick, type Kind } from '../lib/parse'
-import { addDays, iso, fmt, WD, parse as parseDate } from '../lib/date'
+import { addDays, iso, fmt, WD, parse as parseDate, plusHour } from '../lib/date'
 import type { Priority } from '../lib/types'
 import { Btn, Icon, Seg, spring } from './ui'
 
@@ -36,7 +36,7 @@ export function QuickAdd({ open, preset, close, more }: {
   const k: Kind = kind ?? p.kind
   const fDate = date ?? p.date ?? (k === 'note' ? undefined : iso(new Date()))
   const fStart = time ?? p.start ?? (k === 'event' ? '09:00' : undefined)
-  const fEnd = p.end && !time ? p.end : fStart ? `${String(Math.min(23, +fStart.slice(0, 2) + 1)).padStart(2, '0')}:${fStart.slice(3)}` : undefined
+  const fEnd = p.end && !time ? p.end : fStart ? plusHour(fStart) : undefined
   const fProj = proj ?? p.projectId
   const fPrio = prio ?? p.priority ?? 'media'
   const project = data.projects.find(x => x.id === fProj)

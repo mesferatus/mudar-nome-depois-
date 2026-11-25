@@ -6,7 +6,7 @@ import { useStore } from '../lib/store'
 import type { CalEvent } from '../lib/types'
 import { Page, Btn, Icon, useIsMobile } from '../components/ui'
 import { useEditors } from '../components/editors'
-import { WD, MONTHS, addDays, iso, startOfWeek, toMin, pad, today } from '../lib/date'
+import { WD, MONTHS, addDays, iso, startOfWeek, toMin, pad, today, plusHour } from '../lib/date'
 
 /** Distribui eventos sobrepostos lado a lado (como no Outlook). */
 function lanes(evs: CalEvent[]) {
@@ -41,7 +41,7 @@ export default function Agenda({ switcher }: { switcher?: ReactNode }) {
   const create = (ds: string, e: React.MouseEvent<HTMLDivElement>) => {
     const y = e.clientY - e.currentTarget.getBoundingClientRect().top
     const m = Math.floor((y / PX) * 2) * 30, h = Math.floor(m / 60)
-    editEvent({ date: ds, start: `${pad(h)}:${pad(m % 60)}`, end: `${pad(Math.min(23, h + 1))}:${pad(m % 60)}` })
+    const st = `${pad(h)}:${pad(m % 60)}`; editEvent({ date: ds, start: st, end: plusHour(st) })
   }
   const onDrop = (ds: string, e: React.DragEvent<HTMLDivElement>) => {
     const id = e.dataTransfer.getData('text'); const ev = data.events.find(x => x.id === id); if (!ev) return
