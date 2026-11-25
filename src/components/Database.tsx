@@ -3,21 +3,14 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { useStore, uid } from '../lib/store'
 import type { DbSchema, DbView, Note, Prop, PropType } from '../lib/types'
 import { coverBg } from '../lib/art'
+import { newDbSchema, OPT_COLORS } from '../lib/dbschema'
 import { fmt } from '../lib/date'
 import { Icon, Seg, Empty } from './ui'
 
-const OPT_COLORS = ['#e6a87c', '#b9c7e8', '#9fcf9a', '#f0a6ca', '#f0c27a', '#c9a7ff', '#ef8a7a', '#9fd3c7']
 const TYPE_LABEL: Record<PropType, string> = { text: 'Texto', number: 'Número', select: 'Seleção', date: 'Data', checkbox: 'Caixa' }
 const TYPE_ICON: Record<PropType, string> = { text: 'Aa', number: '#', select: '◉', date: '📅', checkbox: '☑' }
 
-export const newDb = (): DbSchema => ({
-  view: 'table',
-  props: [
-    { id: 'status', name: 'Status', type: 'select', options: [{ name: 'A fazer', color: OPT_COLORS[1] }, { name: 'Fazendo', color: OPT_COLORS[0] }, { name: 'Feito', color: OPT_COLORS[2] }] },
-    { id: 'data', name: 'Data', type: 'date' },
-    { id: 'tags', name: 'Responsável', type: 'text' },
-  ],
-})
+export const newDb = newDbSchema
 
 /** Valor editável de uma propriedade (usado na tabela e no painel da página). */
 export function PropValue({ prop, value, onChange, onAddOption }: { prop: Prop; value: unknown; onChange: (v: string | number | boolean | undefined) => void; onAddOption: (name: string) => void }) {

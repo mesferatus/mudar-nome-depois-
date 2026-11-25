@@ -29,7 +29,7 @@ export function QuickAdd({ open, preset, close, more }: {
   useEffect(() => {
     if (!open) return
     setText(''); setKind(preset?.kind ?? null); setDate(preset?.date); setProj(undefined); setPrio(undefined); setTime(undefined)
-    setTimeout(() => ref.current?.focus(), 60)
+    requestAnimationFrame(() => ref.current?.focus())
   }, [open, preset])
 
   const p = useMemo(() => parseQuick(text, data.projects), [text, data.projects])
@@ -66,7 +66,7 @@ export function QuickAdd({ open, preset, close, more }: {
         onMouseDown={e => e.stopPropagation()} drag="y" dragConstraints={{ top: 0, bottom: 0 }} dragElastic={{ top: 0, bottom: .6 }} onDragEnd={(_, i) => i.offset.y > 120 && close()}>
         <div className="modal-h"><Seg value={k} onChange={v => setKind(v)} options={KINDS} /><button className="btn ghost icon" onClick={close} aria-label="Fechar"><Icon n="x" /></button></div>
         <div className="modal-b">
-          <input ref={ref} className="qa-input" value={text} onChange={e => setText(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') close() }}
+          <input ref={ref} autoFocus className="qa-input" value={text} onChange={e => setText(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') close() }}
             placeholder={k === 'event' ? 'Reunião com fornecedor amanhã 14h #bi' : k === 'note' ? 'Ideias para o modelo de estoque' : 'Entregar dashboard sexta !alta ~4h'} />
           <div className="qa-preview">
             <AnimatePresence initial={false}>

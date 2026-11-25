@@ -59,3 +59,19 @@ export async function pushSync(d: Data) {
   await gh(`/gists/${get(K_GIST)}`, { method: 'PATCH', body: JSON.stringify({ files: { [FILE]: { content: JSON.stringify(d) } } }) })
   set(K_BASE, d.updatedAt)
 }
+
+// ---------------- código de pareamento (QR) ----------------
+/** Gera o código que leva token + gist para outro aparelho. */
+export function pairCode(): string | undefined {
+  const t = get(K_TOKEN), g = get(K_GIST); if (!t || !g) return
+  return 'KT1.' + btoa(JSON.stringify({ t, g })).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+}
+/** Lê um código de pareamento e conecta este aparelho. */
+export function applyPairCode(code: string): boolean {
+  const m = code.trim().match(/^KT1\.([\w-]+)$/); if (!m) return false
+  try {
+    const { t, g } = JSON.parse(atob(m[1].replace(/-/g, '+').replace(/_/g, '/')))
+    if (typeof t !== 'string' || typeof g !== 'string') return false
+    set(K_TOKEN, t); set(K_GIST, g); set(K_BASE, ''); return true
+  } catch { return false }
+}
