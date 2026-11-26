@@ -981,3 +981,11 @@ body {
 /* números do Insights também com cara de post-it (PC e celular) */
 .ins-k > .card { border-radius: 4px 4px 14px 4px; background: color-mix(in srgb, var(--accent) 8%, var(--card)); }
 .agent .ic { border-radius: 12px; }
+/* botão Criar no menu lateral do PC (no celular é o + da barra) */
+.side .nav.new-btn { display: none; }
+@media (min-width: 900px) {
+  .side .nav.new-btn { display: flex; background: var(--accent); color: var(--accent-ink); font-weight: 700; margin-bottom: 6px; box-shadow: 2px 3px 0 color-mix(in srgb, var(--accent) 30%, transparent); }
+  .side .nav.new-btn kbd { background: color-mix(in srgb, var(--accent-ink) 14%, transparent); color: var(--accent-ink); border-color: transparent; }
+  .side .nav.new-btn:hover { filter: brightness(1.05); }
+}
+@media (min-width: 900px) { .side .nav.new-btn { padding-right: 12px; } .side .nav.new-btn kbd { margin-right: 0; } }

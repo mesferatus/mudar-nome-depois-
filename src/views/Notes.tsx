@@ -37,6 +37,7 @@ export default function Notes() {
   const note = data.notes.find(n => n.id === sel)
 
   const open = (id?: string) => { setSel(id); setListOpen(false); setPicker(null) }
+  useEffect(() => { const h = () => { create() }; window.addEventListener('kairotec:new-page', h); return () => window.removeEventListener('kairotec:new-page', h) })
   useEffect(() => { const h = (e: Event) => { takeNote(); open((e as CustomEvent<string>).detail) }; window.addEventListener('kairotec:open-note', h); return () => window.removeEventListener('kairotec:open-note', h) }, [])
   const kids = (id?: string) => data.notes.filter(n => !n.trashed && (n.parentId ?? undefined) === id && (id ? true : !n.parentId)).sort((a, b) => a.title.localeCompare(b.title))
   const isDb = (id?: string) => !!data.notes.find(n => n.id === id)?.db
@@ -47,9 +48,9 @@ export default function Notes() {
   const hits = q ? data.notes.filter(n => !n.trashed && (n.title + ' ' + n.body).toLowerCase().includes(q.toLowerCase())) : []
 
   const create = (opts: Partial<Note> = {}) => {
-    const n = upsertNote({ title: 'Sem título', icon: '📄', folder: 'Geral', body: '', ...opts })
+    const n = upsertNote({ title: '', icon: '📄', folder: 'Geral', body: '', ...opts })
     if (opts.parentId) upsertNote({ id: opts.parentId, expanded: true })
-    open(n.id); return n
+    open(n.id); if (!opts.title) setTimeout(() => (document.querySelector('.ntitle') as HTMLInputElement | null)?.focus(), 350); return n
   }
   const newDatabase = (parentId?: string, title = 'Banco de dados') => create({ title, icon: '🗂️', parentId, db: newDb() })
   const duplicate = (n: Note) => { const c = upsertNote({ ...n, id: undefined, title: `${n.title} (cópia)`, pinned: false }); open(c.id); toast('Página duplicada') }
@@ -83,7 +84,7 @@ export default function Notes() {
     <aside className="nlist">
       <div className="row" style={{ marginBottom: 12 }}>
         <input className="input" placeholder="Buscar em tudo…" value={q} onChange={e => setQ(e.target.value)} />
-        <Btn variant="icon primary" onClick={() => create()} aria-label="Nova página"><Icon n="plus" /></Btn>
+        <Btn variant="icon primary desk-only" onClick={() => create()} aria-label="Nova página"><Icon n="plus" /></Btn>
       </div>
       {q ? <div>{hits.length ? hits.map(n => <div key={n.id} className="titem" onClick={() => { open(n.id); setQ('') }}><span className="ticon">{n.icon ?? '📄'}</span><span className="tt">{n.title}</span></div>) : <div className="muted" style={{ padding: 10 }}>Nada encontrado</div>}</div> : <>
         {favs.length > 0 && <><div className="side-sec">Favoritos</div>{favs.map(n => <div key={n.id} className={`titem ${n.id === sel ? 'on' : ''}`} onClick={() => open(n.id)}><span className="tcaret" /><span className="ticon">{n.icon ?? '📄'}</span><span className="tt">{n.title}</span></div>)}</>}
