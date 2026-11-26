@@ -174,13 +174,22 @@ type Engine = { chat: { completions: { create: (b: unknown) => Promise<{ choices
 let engine: { id: string; e: Engine } | null = null
 let loading: Promise<Engine> | null = null
 
+/** Celulares sem suporte a "shader-f16" precisam da versão f32 do modelo. */
+let f16: boolean | undefined
+async function realModel(model: string) {
+  if (f16 === undefined) {
+    try { const a = await (navigator as unknown as { gpu?: { requestAdapter: () => Promise<{ features: Set<string> } | null> } }).gpu?.requestAdapter(); f16 = !!a?.features.has('shader-f16') } catch { f16 = false }
+  }
+  return f16 ? model : model.replace('q4f16_1', 'q4f32_1')
+}
+
 /** Baixa (uma vez; fica guardado no aparelho) e carrega o modelo. */
 export async function deviceLoad(model: string, onProgress?: (pct: number, text: string) => void): Promise<Engine> {
   if (engine?.id === model) return engine.e
   if (loading) return loading
   loading = (async () => {
     const web = await import('@mlc-ai/web-llm')
-    const e = await web.CreateMLCEngine(model, { initProgressCallback: (r: { progress: number; text: string }) => onProgress?.(Math.round(r.progress * 100), r.text) }) as unknown as Engine
+    const e = await web.CreateMLCEngine(await realModel(model), { initProgressCallback: (r: { progress: number; text: string }) => onProgress?.(Math.round(r.progress * 100), r.text) }) as unknown as Engine
     engine = { id: model, e }
     return e
   })()
@@ -188,7 +197,7 @@ export async function deviceLoad(model: string, onProgress?: (pct: number, text:
 }
 export const deviceReady = (model: string) => engine?.id === model
 export async function deviceCached(model: string) {
-  try { const web = await import('@mlc-ai/web-llm'); return await web.hasModelInCache(model) } catch { return false }
+  try { const web = await import('@mlc-ai/web-llm'); return await web.hasModelInCache(await realModel(model)) } catch { return false }
 }
 
 export async function deviceAsk(model: string, d: Data, pedido: string, history: { role: 'user' | 'assistant'; content: string }[], notas = false): Promise<Reply> {
