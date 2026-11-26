@@ -969,3 +969,15 @@ body {
   .dash-top .dash-side { gap: 10px; } .dash-top .action { padding: 8px; }
   .wk-day { padding: 6px 0 4px; } .wk-day b { font-size: 16px; }
 }
+@media (max-width: 760px) {
+  /* Rotinas: botão embaixo do texto, ocupa a largura */
+  .agent { grid-template-columns: 40px 1fr; }
+  .agent > .btn { grid-column: 1 / -1; justify-content: center; }
+  .agent .ic { width: 40px; height: 40px; border-radius: 12px; }
+  /* Insights: números em faixa deslizante, como post-its */
+  .ins-k { display: flex !important; overflow-x: auto; scroll-snap-type: x mandatory; gap: 10px; margin: 0 -16px; padding: 4px 16px 10px; scrollbar-width: none; }
+  .ins-k > .card { flex: 0 0 44%; scroll-snap-align: start; }
+}
+/* números do Insights também com cara de post-it (PC e celular) */
+.ins-k > .card { border-radius: 4px 4px 14px 4px; background: color-mix(in srgb, var(--accent) 8%, var(--card)); }
+.agent .ic { border-radius: 12px; }
