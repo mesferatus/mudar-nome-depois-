@@ -2,12 +2,17 @@ import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useStore } from '../lib/store'
 import { Btn, Card, Icon, Page, Seg, spring } from '../components/ui'
-import { applyActions, copilotPrompt, describe, deviceAsk, deviceCached, deviceLoad, deviceReady, deviceSupported, DEVICE_MODELS, defaultDeviceModel, ollamaAsk, ollamaModels, ollamaPull, parseReply, PRESETS, SUGGESTED_MODEL, type Action } from '../lib/ai'
+import { applyActions, copilotPrompt, describe, deviceAsk, deviceCached, deviceLoad, deviceReady, deviceSupported, deviceUsable, DEVICE_MODELS, defaultDeviceModel, ollamaAsk, ollamaModels, ollamaPull, parseReply, PRESETS, SUGGESTED_MODEL, type Action } from '../lib/ai'
 
 type Engine = 'aparelho' | 'local' | 'copilot'
 const isPhone = () => matchMedia('(max-width: 760px), (pointer: coarse)').matches
 type Msg = { role: 'user' | 'assistant'; content: string; acoes?: Action[]; applied?: boolean }
 const store = { get: (k: string) => { try { return localStorage.getItem(k) ?? '' } catch { return '' } }, set: (k: string, v: string) => { try { localStorage.setItem(k, v) } catch { /* ignore */ } } }
+
+async function copyText(t: string) {
+  try { await navigator.clipboard.writeText(t); return true } catch { /* tenta o jeito antigo */ }
+  try { const a = document.createElement('textarea'); a.value = t; a.style.position = 'fixed'; a.style.opacity = '0'; document.body.appendChild(a); a.select(); const ok = document.execCommand('copy'); a.remove(); return ok } catch { return false }
+}
 
 /** Assistente: conversa com seus dados e propõe ações que você aprova. Local (Ollama) ou Copilot da empresa. */
 export default function Assistant() {
@@ -18,6 +23,9 @@ export default function Assistant() {
     return deviceSupported() ? 'aparelho' : 'copilot'
   })
   const [devModel, setDevModel] = useState(defaultDeviceModel)
+  const [gpuOk, setGpuOk] = useState<boolean | undefined>(undefined)
+  useEffect(() => { deviceUsable().then(ok => { setGpuOk(ok); if (!ok) setEngine(e => e === 'aparelho' ? 'copilot' : e) }) }, [])
+  const [promptTxt, setPromptTxt] = useState('')
   const [devState, setDevState] = useState<{ pct?: number; text?: string; cached?: boolean; err?: string }>({})
   const [models, setModels] = useState<string[] | null | undefined>(undefined) // undefined = verificando, null = Ollama não encontrado
   const [model, setModel] = useState(() => store.get('kairotec:ai-model') || SUGGESTED_MODEL)
@@ -40,8 +48,8 @@ export default function Assistant() {
   }, [])
   const loadDevice = async () => {
     setDevState({ pct: 0, text: 'Preparando…' })
-    try { await deviceLoad(devModel, (pct, text) => setDevState({ pct, text })); setDevState({ cached: true }); return true }
-    catch (e) { setDevState({ err: (e as Error).message }); return false }
+    try { await deviceLoad(devModel, (pct, text) => setDevState({ pct, text })); setDevState({ cached: true }); return '' }
+    catch (e) { const m = (e as Error).message || 'erro desconhecido'; setDevState({ err: m }); return m }
   }
   useEffect(() => { end.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }) }, [msgs, busy])
 
@@ -50,13 +58,14 @@ export default function Assistant() {
     setInput('')
     setMsgs(m => [...m, { role: 'user', content: pedido }])
     if (engine === 'copilot') {
-      await navigator.clipboard.writeText(copilotPrompt(data, pedido, notas)).catch(() => { /* sem área de transferência */ })
-      setPending({ pedido, notas }); toast('Pergunta copiada · cole no Copilot (Ctrl+V)')
+      const txt = copilotPrompt(data, pedido, notas); setPromptTxt(txt)
+      const ok = await copyText(txt)
+      setPending({ pedido, notas }); toast(ok ? 'Pergunta copiada · cole no Copilot' : 'Toque em "Copiar pergunta" e cole no Copilot')
       return
     }
     setBusy('pensando')
     try {
-      if (engine === 'aparelho' && !deviceReady(devModel)) { setBusy('carregando'); if (!(await loadDevice())) throw new Error('Não consegui carregar a IA neste aparelho'); setBusy('pensando') }
+      if (engine === 'aparelho' && !deviceReady(devModel)) { setBusy('carregando'); { const err = await loadDevice(); if (err) throw new Error(`Não consegui carregar a IA neste aparelho (${err.slice(0, 120)}). Se a internet estiver ok, use o Copilot`) }; setBusy('pensando') }
       const hist = msgs.map(x => ({ role: x.role, content: x.content }))
       const r = engine === 'aparelho' ? await deviceAsk(devModel, data, pedido, hist, notas) : await ollamaAsk(model, data, pedido, hist, notas)
       setMsgs(m => [...m, { role: 'assistant', content: r.resposta || '(sem resposta)', acoes: r.acoes }])
@@ -82,7 +91,7 @@ export default function Assistant() {
   const ready = engine === 'copilot' || engine === 'aparelho' || !!models?.length
   return <Page>
     <div className="head"><div><h1>Assistente</h1><p>Converse com suas tarefas, agenda e notas. Ele só sugere — você decide o que aplicar.</p></div><div className="sp" />
-      <Seg value={engine} onChange={setEngine} options={[...(deviceSupported() ? [{ v: 'aparelho' as Engine, l: '✨ Neste aparelho' }] : []), ...(isPhone() ? [] : [{ v: 'local' as Engine, l: '💻 Ollama' }]), { v: 'copilot' as Engine, l: '🪟 Copilot' }]} /></div>
+      <Seg value={engine} onChange={setEngine} options={[...(deviceSupported() && gpuOk !== false ? [{ v: 'aparelho' as Engine, l: '✨ Neste aparelho' }] : []), ...(isPhone() ? [] : [{ v: 'local' as Engine, l: '💻 Ollama' }]), { v: 'copilot' as Engine, l: '🪟 Copilot' }]} /></div>
     <div className="ai">
       <div className="ai-chat card">
         <div className="ai-msgs scroll">
@@ -100,7 +109,9 @@ export default function Assistant() {
           </motion.div>)}</AnimatePresence>
           {busy && <div className="ai-msg assistant"><div className="ai-bubble ai-typing">{busy === 'carregando' ? <span className="muted">Preparando a IA… {devState.pct ?? 0}%</span> : <><i /><i /><i /></>}</div></div>}
           {pending && <motion.div className="ai-paste" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-            <b>1.</b> A pergunta já está copiada. <a href="https://m365.cloud.microsoft/chat" target="_blank" rel="noreferrer">Abra o Copilot</a>, cole (Ctrl+V) e envie.<br /><b>2.</b> Copie a resposta inteira do Copilot e cole aqui:
+            <div className="row wrap" style={{ gap: 8, marginBottom: 8 }}><Btn variant="sm" onClick={async () => toast(await copyText(promptTxt) ? 'Copiada ✓' : 'Não deu para copiar')}>📋 Copiar pergunta</Btn>
+              <a className="btn sm primary" href="https://m365.cloud.microsoft/chat" target="_blank" rel="noreferrer">Abrir Copilot ↗</a></div>
+            <b>1.</b> Cole a pergunta no Copilot e envie.<br /><b>2.</b> Copie a resposta inteira do Copilot e cole aqui:
             <textarea className="input" rows={4} value={paste} onChange={e => setPaste(e.target.value)} placeholder='{"resposta": "...", "acoes": [...]}' />
             <div className="row" style={{ justifyContent: 'flex-end' }}><Btn variant="sm ghost" onClick={() => setPending(null)}>Cancelar</Btn><Btn variant="sm primary" disabled={!paste.trim()} onClick={readPaste}>Ler resposta</Btn></div>
           </motion.div>}
@@ -119,7 +130,7 @@ export default function Assistant() {
             <div className="field"><label>Modelo</label><select className="input" value={devModel} onChange={e => setDevModel(e.target.value)}>{DEVICE_MODELS.map(m => <option key={m.id} value={m.id}>{m.l} · {m.size}</option>)}</select></div>
             {devState.pct !== undefined ? <div><div className="ai-bar"><i style={{ width: `${devState.pct}%` }} /></div><small className="muted">{devState.pct}% · preparando sozinha no Wi-Fi (só na primeira vez)</small></div>
               : !devState.cached && <Btn variant="sm primary" onClick={loadDevice}>Baixar agora</Btn>}
-            {devState.err && <p style={{ color: 'var(--bad)', fontSize: 13 }}>⚠ {devState.err}. Se continuar, use o modo Copilot.</p>}
+            {devState.err && <div style={{ color: 'var(--bad)', fontSize: 13 }}>⚠ Não consegui preparar a IA: {devState.err}<div className="row" style={{ gap: 8, marginTop: 8 }}><Btn variant="sm" onClick={loadDevice}>Tentar de novo</Btn><Btn variant="sm" onClick={() => setEngine('copilot')}>Usar Copilot</Btn></div></div>}
           </div>
         </Card> : engine === 'local' ? <Card title="IA local · Ollama" sub={models === undefined ? 'verificando…' : models ? '● pronta' : '○ não encontrada'}>
           {models === null && <div className="ai-steps">
