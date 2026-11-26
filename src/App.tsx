@@ -144,6 +144,8 @@ function Shell() {
   useEffect(() => { document.title = `${cur.l} · Kairotec` }, [cur.l])
   const overdue = data.tasks.filter(t => t.status !== 'done' && t.due && t.due < new Date().toISOString().slice(0, 10)).length
   const [more, setMore] = useState(false)
+  // um só botão de criar, que entende a tela: página em Notas, evento no Calendário, tarefa no resto
+  const create = () => view === 'notas' ? window.dispatchEvent(new Event('kairotec:new-page')) : quick({ kind: view === 'calendario' ? 'event' : 'task' })
   // abertura animada (PC e celular), uma vez por abertura do app
   const [splash, setSplash] = useState(() => { try { return !sessionStorage.getItem('kairotec:splash') && !matchMedia('(prefers-reduced-motion: reduce)').matches } catch { return false } })
   useEffect(() => { if (!splash) return; try { sessionStorage.setItem('kairotec:splash', '1') } catch { /* ignore */ } const t = setTimeout(() => setSplash(false), 1250); return () => clearTimeout(t) }, [splash])
@@ -197,8 +199,9 @@ function Shell() {
       </motion.div></motion.div>}</AnimatePresence>
     <nav className="side">
       <div className="brand"><Logo size={34} /><b>kairotec<i>.</i></b><button className="collapse" onClick={() => setCompact(c => !c)} aria-label={compact ? 'Expandir menu' : 'Recolher menu'} title={compact ? 'Expandir menu' : 'Recolher menu'}><Icon n={compact ? 'right' : 'left'} s={14} /></button></div>
+      <motion.button whileTap={{ scale: .96 }} className="nav new-btn" onClick={create} title="Criar (tecla N)"><span className="ico"><Icon n="plus" s={18} /></span><span className="lbl">{view === 'notas' ? 'Nova página' : view === 'calendario' ? 'Novo evento' : 'Novo'}</span><kbd>N</kbd></motion.button>
       <button className="nav search" onClick={() => setPal(true)}><span className="ico"><Icon n="search" /></span><span className="lbl">Buscar</span><kbd>Ctrl K</kbd></button>
-      {NAV.map((n, i) => <Fragment key={n.id}>{i === 4 && <div className="side-sec">Ferramentas</div>}<motion.button whileTap={{ scale: .94 }} key={n.id} className={`nav ${view === n.id ? 'on' : ''} ${n.mob ? '' : 'more'}`} onClick={() => setView(n.id)} aria-label={n.l}>
+      {NAV.map((n, i) => <Fragment key={n.id}>{i === 2 && <motion.button className="nav-plus" whileTap={{ scale: .88, rotate: 90 }} aria-label="Criar" onClick={create}><Icon n="plus" s={24} /></motion.button>}{i === 4 && <div className="side-sec">Ferramentas</div>}<motion.button whileTap={{ scale: .94 }} key={n.id} className={`nav ${view === n.id ? 'on' : ''} ${n.mob ? '' : 'more'}`} onClick={() => setView(n.id)} aria-label={n.l}>
         {view === n.id && <motion.div layoutId="navpill" className="nav-pill" transition={spring} />}
         <span className="ico"><Icon n={n.i} s={18} /></span><span className="lbl">{n.l}</span>
         {n.id === 'entregas' && overdue > 0 ? <span className="chip" style={{ color: 'var(--bad)' }}>{overdue}</span> : <kbd>Alt {n.k}</kbd>}
@@ -212,8 +215,6 @@ function Shell() {
       </div>
     </nav>
     <main className="main" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}><AnimatePresence mode="wait" custom={dir}><motion.div key={view} custom={dir} variants={SLIDE} initial="in" animate="on" exit="out" transition={{ type: 'spring', stiffness: 420, damping: 36 }} style={{ height: view === 'notas' ? '100%' : undefined }}><Cur /></motion.div></AnimatePresence></main>
-    {!['ajustes', 'notas'].includes(view) && <motion.button className="fab" onClick={() => quick({ kind: view === 'calendario' ? 'event' : 'task' })} initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} whileHover={{ y: -2 }} whileTap={{ scale: .92 }} transition={spring} aria-label="Novo" title="Criar (tecla N)">
-      <Icon n="plus" s={20} /> Novo</motion.button>}
     <FocusTimer />
     <Palette open={pal} close={() => setPal(false)} go={setView} />
     <AnimatePresence>{!data.settings.onboarded && <Onboarding key="ob" />}</AnimatePresence>
