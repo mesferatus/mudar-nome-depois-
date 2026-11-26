@@ -198,7 +198,7 @@ function Shell() {
     <nav className="side">
       <div className="brand"><Logo size={34} /><b>kairotec<i>.</i></b><button className="collapse" onClick={() => setCompact(c => !c)} aria-label={compact ? 'Expandir menu' : 'Recolher menu'} title={compact ? 'Expandir menu' : 'Recolher menu'}><Icon n={compact ? 'right' : 'left'} s={14} /></button></div>
       <button className="nav search" onClick={() => setPal(true)}><span className="ico"><Icon n="search" /></span><span className="lbl">Buscar</span><kbd>Ctrl K</kbd></button>
-      {NAV.map((n, i) => <Fragment key={n.id}>{i === 4 && <div className="side-sec">Ferramentas</div>}<motion.button whileTap={{ scale: .94 }} key={n.id} className={`nav ${view === n.id ? 'on' : ''} ${n.mob ? '' : 'more'}`} onClick={() => setView(n.id)} aria-label={n.l}>
+      {NAV.map((n, i) => <Fragment key={n.id}>{i === 2 && <motion.button className="nav-plus" whileTap={{ scale: .88, rotate: 90 }} aria-label="Criar" onClick={() => quick({ kind: view === 'calendario' ? 'event' : view === 'notas' ? 'note' : 'task' })}><Icon n="plus" s={24} /></motion.button>}{i === 4 && <div className="side-sec">Ferramentas</div>}<motion.button whileTap={{ scale: .94 }} key={n.id} className={`nav ${view === n.id ? 'on' : ''} ${n.mob ? '' : 'more'}`} onClick={() => setView(n.id)} aria-label={n.l}>
         {view === n.id && <motion.div layoutId="navpill" className="nav-pill" transition={spring} />}
         <span className="ico"><Icon n={n.i} s={18} /></span><span className="lbl">{n.l}</span>
         {n.id === 'entregas' && overdue > 0 ? <span className="chip" style={{ color: 'var(--bad)' }}>{overdue}</span> : <kbd>Alt {n.k}</kbd>}
